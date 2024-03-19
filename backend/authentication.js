@@ -1,5 +1,4 @@
 // TODO: Create separate user search function (update for database search)
-// TODO: Add in token-based authentication
 // TODO: Refactor using OOP principles
 // TODO: Write API tracking function
 
@@ -7,17 +6,20 @@
 const express = require('express')
 require('dotenv').config()
 const bcrypt = require('bcrypt')
-const app = express()
 const jwt = require('jsonwebtoken')
+const app = express()
 
 
  const CREATED_USER_201          = 201
  const BAD_REQUEST_400           = 400
+ const UNAUTHORIZED_401          = 401
+ const FORBIDDEN_403             = 403
  const CONFLICT_409              = 409
  const INTERNAL_SERVER_ERROR_500 = 500
 
  const SALT_ROUNDS   = 10 // User for password hashing
  const MAX_API_CALLS = 20 // Max number of API calls
+ const SECRET_KEY    = process.env.SECRET_KEY // Secret key for JWT
 
 
 /* An Express method to configure middleware; has access to requests
@@ -55,7 +57,7 @@ app.post('/users', async (req, res) => {
             name: req.body.name,
             email: req.body.email,
             password: hashedPassword,
-            api_calls: 0
+            api_call_counter: 0
         }
 
         // User successfully created and stored
@@ -86,7 +88,9 @@ app.post("/users/login", async (req, res) => {
     try {
         // User found; entered password same as stored password
         if (await bcrypt.compare(req.body.password, user.password)) {
-            res.send('Success')
+            // Create token
+            const token = jwt.sign({userEmail : user.email}, SECRET_KEY, {expiresIn: '1h'})
+            res.cookie('token', token, {httpOnly: true}).send('Success')
         } else {
             res.send('Not Allowed')
         }
@@ -103,7 +107,28 @@ app.post("/users/login", async (req, res) => {
 app.listen(3000)
 
 
+//////////////////////////
+// MIDDLEWARE FUNCTIONS //
+//////////////////////////
+
+function authenticateToken(req, res, next) {
+    const token = req.cookies.token
+
+    if (token == null) return res.sendStatus(UNAUTHORIZED_401)
+
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err) return res.sendStatus(FORBIDDEN_403)
+        req.user = user
+        next()
+    })
+}
+
 // Middleware function to track API calls
 function trackApiCalls(req, res, next) {
-
+    const user = req.user
+    if (user.api_call_counter >= MAX_API_CALLS) {
+        return res.status(FORBIDDEN_403).send('API call limit reached')
+    }
+    user.api_call_counter++
+    next()
 }
