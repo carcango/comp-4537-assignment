@@ -5,6 +5,7 @@
 
 
 const express = require('express')
+require('dotenv').config()
 const bcrypt = require('bcrypt')
 const app = express()
 const jwt = require('jsonwebtoken')
