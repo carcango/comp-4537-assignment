@@ -7,6 +7,7 @@
 const express = require('express')
 const bcrypt = require('bcrypt')
 const app = express()
+const jwt = require('jsonwebtoken')
 
 
  const CREATED_USER_201          = 201
@@ -72,10 +73,10 @@ app.post('/users', async (req, res) => {
 app.post("/users/login", async (req, res) => {
 
     // Look for user based on name and email
-    const user = users.find(user => {
+    const user = users.find(user =>
         user.name === req.body.name &&
         user.email === req.body.email
-    })
+    );
 
     if (user == null) {
         return res.status(BAD_REQUEST_400).send('Cannot find user')
@@ -101,6 +102,7 @@ app.post("/users/login", async (req, res) => {
 app.listen(3000)
 
 
-function trackApiCalls(user) {
+// Middleware function to track API calls
+function trackApiCalls(req, res, next) {
 
 }
