@@ -1,3 +1,9 @@
+// TODO: Create separate user search function (update for database search)
+// TODO: Add in token-based authentication
+// TODO: Refactor using OOP principles
+// TODO: Write API tracking function
+
+
 const express = require('express')
 const bcrypt = require('bcrypt')
 const app = express()
@@ -60,7 +66,7 @@ app.post('/users', async (req, res) => {
 })
 
 ////////////////
-// USER LOGIN //
+// User Login //
 ////////////////
 
 app.post("/users/login", async (req, res) => {
@@ -87,4 +93,14 @@ app.post("/users/login", async (req, res) => {
     }
 })
 
+//////////////////
+// User API URL //
+//////////////////
+
+
 app.listen(3000)
+
+
+function trackApiCalls(user) {
+
+}
