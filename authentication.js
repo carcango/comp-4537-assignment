@@ -9,6 +9,7 @@ import { ERROR_CODES, ERROR_MESSAGES, MAX_TOKEN_AGE_IN_MS, MAX_API_CALLS } from 
 
 const express      = require('express')
 const app          = express()
+const bcrypt       = require('bcrypt')
 const jwt          = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 
@@ -18,7 +19,7 @@ require('dotenv').config() // Load environment variable: secret key for JWT
 app.use(express.json())
 app.use(cookieParser())
 
-// Array to store users; will be replaced with database
+// Array to store users; used for testing, will be replaced with database
 const users = []
 
 ///////////////////////
@@ -39,16 +40,18 @@ app.post('/users', async (req, res) => {
             return res.status(BAD_REQUEST_400).send(MSG_400)
         }
 
-        if (users.find(user => user.email === req.body.email)) {
+        // Will need to update this to use database search
+        if (users.find(user => user.email === req.body.email)) {x
             return res.status(CONFLICT_409).send(MSG_409)
         }
 
-        const user = User.create(req.body.email, req.body.password)
+        const user = await User.create(req.body.email, req.body.password)
 
         users.push(user)
         res.status(CREATED_USER_201).send(MSG_201)
 
-    } catch {
+    } catch(error) {
+        console.log(error)
         res.status(SERVER_ERROR).send(MSG_500)
     }
 })
@@ -130,7 +133,7 @@ function trackApiCalls(req, res, next) {
     user.api_call_counter++
 
     if (user.api_call_counter > MAX_API_CALLS) {
-        return res.status(ERROR_CODES.FORBIDDEN_403).send(ERROR_MESSAGESMSG_403)
+        return res.status(ERROR_CODES.FORBIDDEN_403).send(ERROR_MESSAGES.MSG_403)
     }
 
     // Update counter in database for persistence (to be implemented)
