@@ -1,17 +1,21 @@
 // TODO: Create separate user search function (update for database search)
 // TODO: Refactor using OOP principles
-// TODO: Write API tracking function
+// TODO: Write API tracking function; update for database
 // TODO: Add specific route for API calls; add middleware to track API calls
 
+const express      = require('express')
+const app          = express()
 
-const express = require('express')
-require('dotenv').config()
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
+const bcrypt       = require('bcrypt')
+const jwt          = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
-const app = express()
 
+// Load environment variable: secret key for JWT
+require('dotenv').config()
 
+/////////////////
+// Error Codes //
+/////////////////
 const CREATED_USER_201          = 201
 const BAD_REQUEST_400           = 400
 const UNAUTHORIZED_401          = 401
@@ -24,18 +28,17 @@ const MAX_API_CALLS = 20 // Max number of API calls
 const SECRET_KEY    = process.env.SECRET_KEY // Secret key for JWT
 const MAX_TOKEN_AGE = 3600000 // 1 hour in milliseconds
 
-
-/* An Express method to configure middleware; has access to requests
-and response objects, plus the next middleware function to be run. */
+// Allows Express to parse JSON and cookie data for middleware
 app.use(express.json())
-
 app.use(cookieParser())
 
-/* Users will be stored in a database, but for testing
-purposes, we'll store them in a local variable. */
+// Array to store users; will be replaced with database
 const users = []
 
-app.get('/users', (req, res) => {
+///////////////////////
+// Get Current Users //
+///////////////////////
+app.get('/users', (_, res) => {
     res.json(users)
 })
 
@@ -43,11 +46,10 @@ app.get('/users', (req, res) => {
 // Create User, Hash Password, Store User //
 ////////////////////////////////////////////
 app.post('/users', async (req, res) => {
-    console.log(req.body)
     try {
 
         if (req.body.email == null || req.body.password == null) {
-            return res.status(BAD_REQUEST_400).send("Missing name, email, or password")
+            return res.status(BAD_REQUEST_400).send("Missing email or password")
         }
 
         if (users.find(user => user.email === req.body.email)) {
@@ -55,7 +57,7 @@ app.post('/users', async (req, res) => {
         }
 
         /* Hashes the password; takes the original plain-text password and a
-        salt, which is the complexity of the hashing process -- a higher number
+        salt, which is the complexity of the hashing process -- higher number
         means more time, more complexity, and more security. */
         const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS)
 
@@ -64,18 +66,19 @@ app.post('/users', async (req, res) => {
             password: hashedPassword,
             api_call_counter: 0
         }
+
         users.push(user)
         res.status(CREATED_USER_201).send("User successfully registered!")
 
     } catch {
-        res.status(INTERNAL_SERVER_ERROR_500).send()
+        res.status(INTERNAL_SERVER_ERROR_500).send("Error creating user")
     }
 })
+
 
 ////////////////
 // User Login //
 ////////////////
-
 app.post("/users/login", async (req, res) => {
 
     if (req.body.email == null || req.body.password == null) {
@@ -115,13 +118,12 @@ app.post("/users/login", async (req, res) => {
 //////////////////
 
 
-app.listen(3000, ()=> console.log("Server started; listening on port 3000"))
+app.listen(3000, ()=> console.log("Server started; listening on Port 3000"))
 
 
 //////////////////////////
 // MIDDLEWARE FUNCTIONS //
 //////////////////////////
-
 function authenticateToken(req, res, next) {
     const token = req.cookies.token
 
@@ -157,7 +159,7 @@ function trackApiCalls(req, res, next) {
         return res.status(FORBIDDEN_403).send('API call limit reached')
     }
 
-    // Update counter in database
+    // Update counter in database for persistence (to be implemented)
 
     next()
 }
