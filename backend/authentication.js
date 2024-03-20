@@ -119,7 +119,7 @@ app.post("/users/login", async (req, res) => {
             res.send(MSG_401)
         }
     } catch {
-        res.status(INTERNAL_SERVER_ERROR_500).send(ERROR_500_MSG)
+        res.status(INTERNAL_SERVER_ERROR_500).send(MSG_500)
     }
 })
 
