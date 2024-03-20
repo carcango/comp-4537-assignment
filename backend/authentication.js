@@ -152,7 +152,6 @@ function authenticateToken(req, res, next) {
     })
 }
 
-// Middleware function to track API calls
 function trackApiCalls(req, res, next) {
 
     // Get user email from decoded token; find user based on email
