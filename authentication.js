@@ -4,10 +4,11 @@
 // TODO: Add specific route for API calls; add middleware to track API calls
 // TODO: Add user-facing messages to separate file
 
+import User from './user'
+
 const express      = require('express')
 const app          = express()
 
-const bcrypt       = require('bcrypt')
 const jwt          = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 
@@ -59,6 +60,7 @@ app.get('/users', (_, res) => {
 app.post('/users', async (req, res) => {
     try {
 
+        // Check payload for email and password; ensure they exist
         if (req.body.email == null || req.body.password == null) {
             return res.status(BAD_REQUEST_400).send(MSG_400)
         }
@@ -67,16 +69,7 @@ app.post('/users', async (req, res) => {
             return res.status(CONFLICT_409).send(MSG_409)
         }
 
-        /* Hashes the password; takes the original plain-text password and a
-        salt, which is the complexity of the hashing process -- higher number
-        means more time, more complexity, and more security. */
-        const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS)
-
-        const user = {
-            email: req.body.email,
-            password: hashedPassword,
-            api_call_counter: INITIAL_API_COUNTER
-        }
+        const user = User.create(req.body.email, req.body.password)
 
         users.push(user)
         res.status(CREATED_USER_201).send(MSG_201)

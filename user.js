@@ -1,5 +1,3 @@
-// TODO: Check if user email already registered
-
 import { isEmail } from 'validator'
 import { hash } from 'bcrypt'
 
@@ -13,13 +11,18 @@ class User {
     }
 
     static async create(email, password) {
+
         if (email == null || password == null) {
             throw new Error("Email and password are required")
         }
+
         if (!User.isValidEmail(email)) {
             throw new Error("Email is invalid")
         }
-        const hashedPassword = User.hashPassword(password)
+
+        // TODO: Check if user email already registered
+
+        const hashedPassword = await User.hashPassword(password)
         return new User(email, hashedPassword)
     }
 
@@ -31,3 +34,5 @@ class User {
         return isEmail(email)
     }
 }
+
+export default User
