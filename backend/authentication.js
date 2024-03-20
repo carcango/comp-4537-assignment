@@ -4,11 +4,11 @@
 // TODO: Add specific route for API calls; add middleware to track API calls
 
 
-import express, { json } from 'express'
+const express = require('express')
 require('dotenv').config()
-import { hash, compare } from 'bcrypt'
-import { sign, verify } from 'jsonwebtoken'
-import cookieParser from 'cookie-parser'
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 const app = express()
 
 
@@ -27,7 +27,7 @@ const MAX_TOKEN_AGE = 3600000 // 1 hour in milliseconds
 
 /* An Express method to configure middleware; has access to requests
 and response objects, plus the next middleware function to be run. */
-app.use(json())
+app.use(express.json())
 
 app.use(cookieParser())
 
@@ -56,7 +56,7 @@ app.post('/users', async (req, res) => {
         /* Hashes the password; takes the original plain-text password and a
         salt, which is the complexity of the hashing process -- a higher number
         means more time, more complexity, and more security. */
-        const hashedPassword = await hash(req.body.password, SALT_ROUNDS)
+        const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS)
 
         const user = {
             name: req.body.name,
@@ -84,10 +84,10 @@ app.post("/users/login", async (req, res) => {
     }
 
     try {
-        if (await compare(req.body.password, user.password)) {
+        if (await bcrypt.compare(req.body.password, user.password)) {
 
             // Create token; user email is the payload (used to identify user later on)
-            const token = sign({userEmail : user.email}, SECRET_KEY, {expiresIn: '1h'})
+            const token = jwt.sign({userEmail : user.email}, SECRET_KEY, {expiresIn: '1h'})
 
             /* Set token in HTTP-only cookie
             > httpOnly: true - cookie cannot be accessed by client-side scripts
@@ -123,7 +123,7 @@ function authenticateToken(req, res, next) {
 
     if (token == null) return res.sendStatus(UNAUTHORIZED_401)
 
-    verify(token, SECRET_KEY, (err, decoded) => {
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
         if (err) return res.sendStatus(FORBIDDEN_403)
 
         // Use email from decoded token to find user
