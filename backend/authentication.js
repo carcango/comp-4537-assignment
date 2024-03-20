@@ -2,6 +2,7 @@
 // TODO: Refactor using OOP principles
 // TODO: Write API tracking function; update for database
 // TODO: Add specific route for API calls; add middleware to track API calls
+// TODO: Add user-facing messages to separate file
 
 const express      = require('express')
 const app          = express()
@@ -10,23 +11,33 @@ const bcrypt       = require('bcrypt')
 const jwt          = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 
-// Load environment variable: secret key for JWT
-require('dotenv').config()
+require('dotenv').config() // Load environment variable: secret key for JWT
 
-/////////////////
-// Error Codes //
-/////////////////
+////////////////////////////
+// Error Codes & Messages //
+////////////////////////////
 const CREATED_USER_201          = 201
 const BAD_REQUEST_400           = 400
 const UNAUTHORIZED_401          = 401
 const FORBIDDEN_403             = 403
+const NOT_FOUND_404             = 404
 const CONFLICT_409              = 409
 const INTERNAL_SERVER_ERROR_500 = 500
 
-const SALT_ROUNDS   = 10 // User for password hashing
-const MAX_API_CALLS = 20 // Max number of API calls
-const SECRET_KEY    = process.env.SECRET_KEY // Secret key for JWT
-const MAX_TOKEN_AGE = 3600000 // 1 hour in milliseconds
+const MSG_200 = "OK"
+const MSG_201 = "User successfully registered!"
+const MSG_400 = "Missing email or password"
+const MSG_401 = "You're not authorized to access this resource"
+const MSG_403 = "You've exceeded your API call limit"
+const MSG_404 = "User not found"
+const MSG_409 = "User already exists"
+const MSG_500 = "Internal Server Error"
+
+const SECRET_KEY          = process.env.SECRET_KEY // For JWT
+const SALT_ROUNDS         = 10 // User for password hashing
+const MAX_API_CALLS       = 20
+const MAX_TOKEN_AGE       = 3600000 // 1 hour in milliseconds
+const INITIAL_API_COUNTER = 0
 
 // Allows Express to parse JSON and cookie data for middleware
 app.use(express.json())
@@ -49,11 +60,11 @@ app.post('/users', async (req, res) => {
     try {
 
         if (req.body.email == null || req.body.password == null) {
-            return res.status(BAD_REQUEST_400).send("Missing email or password")
+            return res.status(BAD_REQUEST_400).send(MSG_400)
         }
 
         if (users.find(user => user.email === req.body.email)) {
-            return res.status(CONFLICT_409).send("User already exists")
+            return res.status(CONFLICT_409).send(MSG_409)
         }
 
         /* Hashes the password; takes the original plain-text password and a
@@ -64,17 +75,16 @@ app.post('/users', async (req, res) => {
         const user = {
             email: req.body.email,
             password: hashedPassword,
-            api_call_counter: 0
+            api_call_counter: INITIAL_API_COUNTER
         }
 
         users.push(user)
-        res.status(CREATED_USER_201).send("User successfully registered!")
+        res.status(CREATED_USER_201).send(MSG_201)
 
     } catch {
-        res.status(INTERNAL_SERVER_ERROR_500).send("Error creating user")
+        res.status(INTERNAL_SERVER_ERROR_500).send(MSG_500)
     }
 })
-
 
 ////////////////
 // User Login //
@@ -82,19 +92,19 @@ app.post('/users', async (req, res) => {
 app.post("/users/login", async (req, res) => {
 
     if (req.body.email == null || req.body.password == null) {
-        return res.status(BAD_REQUEST_400).send("Missing name, email, or password")
+        return res.status(BAD_REQUEST_400).send(MSG_400)
     }
 
     const user = users.find(user => user.email === req.body.email);
     if (user == null) {
-        return res.status(BAD_REQUEST_400).send('Cannot find user')
+        return res.status(NOT_FOUND_404).send(MSG_404)
     }
 
     try {
         if (await bcrypt.compare(req.body.password, user.password)) {
 
             // Create token; user email is the payload (used to identify user later on)
-            const token = jwt.sign({userEmail : user.email}, SECRET_KEY, {expiresIn: '1h'})
+            const token = jwt.sign({userEmail : user.email}, SECRET_KEY, {expiresIn: MAX_TOKEN_AGE})
 
             /* Set token in HTTP-only cookie
             > httpOnly: true - cookie cannot be accessed by client-side scripts
@@ -103,13 +113,13 @@ app.post("/users/login", async (req, res) => {
                 httpOnly: true,
                 secure: false,
                 maxAge: MAX_TOKEN_AGE})
-                .send('Login successful!')
+                .send(MSG_200)
 
         } else {
-            res.send('Not Allowed')
+            res.send(MSG_401)
         }
     } catch {
-        res.status(INTERNAL_SERVER_ERROR_500).send()
+        res.status(INTERNAL_SERVER_ERROR_500).send(ERROR_500_MSG)
     }
 })
 
@@ -150,13 +160,13 @@ function trackApiCalls(req, res, next) {
     const user = users.find(user => user.email === userEmail)
 
     if (!user) {
-        return res.status(UNAUTHORIZED_401).send('User not found')
+        return res.status(UNAUTHORIZED_401).send(MSG_401)
     }
 
     user.api_call_counter++
 
     if (user.api_call_counter > MAX_API_CALLS) {
-        return res.status(FORBIDDEN_403).send('API call limit reached')
+        return res.status(FORBIDDEN_403).send(MSG_403)
     }
 
     // Update counter in database for persistence (to be implemented)
