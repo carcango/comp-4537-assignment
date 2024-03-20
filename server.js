@@ -126,10 +126,14 @@ const API_URL = "https://api.anthropic.com";
 const API_TOKEN = process.env.ANTHROPIC_API_TOKEN;
 const ANTHROPIC_VERSION = "2023-06-01";
 
+let conversationHistory = [];
+
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
   try {
+    conversationHistory.push({ role: "user", content: message });
+
     const response = await fetch(`${API_URL}/v1/messages`, {
       method: "POST",
       headers: {
@@ -139,13 +143,7 @@ app.post("/chat", async (req, res) => {
       },
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
-        system: "Roleplay to simulate a text-based adventure game",
-        messages: [
-          {
-            role: "user",
-            content: message,
-          },
-        ],
+        messages: conversationHistory,
         max_tokens: 200,
       }),
     });
@@ -155,6 +153,7 @@ app.post("/chat", async (req, res) => {
 
     if (response.ok) {
       const assistantReply = data.content[0].text;
+      conversationHistory.push({ role: "assistant", content: assistantReply });
       res.json({ message: assistantReply });
     } else {
       console.error("Error:", data);
