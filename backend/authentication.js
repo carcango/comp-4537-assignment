@@ -16,13 +16,13 @@ require('dotenv').config() // Load environment variable: secret key for JWT
 ////////////////////////////
 // Error Codes & Messages //
 ////////////////////////////
-const CREATED_USER_201          = 201
-const BAD_REQUEST_400           = 400
-const UNAUTHORIZED_401          = 401
-const FORBIDDEN_403             = 403
-const NOT_FOUND_404             = 404
-const CONFLICT_409              = 409
-const INTERNAL_SERVER_ERROR_500 = 500
+const CREATED_USER_201 = 201
+const BAD_REQUEST_400  = 400
+const UNAUTHORIZED_401 = 401
+const FORBIDDEN_403    = 403
+const NOT_FOUND_404    = 404
+const CONFLICT_409     = 409
+const SERVER_ERROR     = 500
 
 const MSG_200 = "OK"
 const MSG_201 = "User successfully registered!"
@@ -72,18 +72,12 @@ app.post('/users', async (req, res) => {
         means more time, more complexity, and more security. */
         const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS)
 
-        const user = {
-            email: req.body.email,
-            password: hashedPassword,
-            api_call_counter: INITIAL_API_COUNTER
-        }
-
-        users.push(user)
-        res.status(CREATED_USER_201).send(MSG_201)
-
-    } catch {
-        res.status(INTERNAL_SERVER_ERROR_500).send(MSG_500)
-    }
+        const useemail: req.body.email,
+    d: hashedPassword,
+            api_car: INITIAL_API_COUNTER
+        }.push(user)
+        res.status(CREATED_USER_201).send(M } cas.status(SERVER_ERROR)   .send(MSG_500)
+     }
 })
 
 ////////////////
@@ -109,17 +103,12 @@ app.post("/users/login", async (req, res) => {
             /* Set token in HTTP-only cookie
             > httpOnly: true - cookie cannot be accessed by client-side scripts
             > secure: true - cookie will only be sent over HTTPS; set to false for testing */
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: false,
-                maxAge: MAX_TOKEN_AGE})
-                .send(MSG_200)
-
-        } else {
-            res.send(MSG_401)
-        }
-    } catch {
-        res.status(INTERNAL_SERVER_ERROR_500).send(MSG_500)
+            res.cookie('token', tokehttpOnly: true,
+                sece,
+                maxAge: MAXE})
+                .send(MSG_ else {
+            res.send(M }
+    } cas.status(SERVE R_ERROR)   .send(MSG_500)
     }
 })
 
