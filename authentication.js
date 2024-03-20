@@ -42,7 +42,6 @@ app.post('/users', async (req, res) => {
 
     // Will need to update this to use database search
     if (users.find(user => user.email === req.body.email)) {
-      x
       return res.status(ERROR_CODES.CONFLICT_409).send(ERROR_MESSAGES.MSG_409)
     }
 
