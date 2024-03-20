@@ -4,8 +4,8 @@
 // TODO: Add specific route for API calls; add middleware to track API calls
 // TODO: Add user-facing messages to separate file
 
-import User from './user'
-import { RESPONSE_CODES, RESPONSE_MSG, MAX_TOKEN_AGE_IN_MS, MAX_API_CALLS } from './constants'
+const User = require('./user')
+const { RESPONSE_CODES, RESPONSE_MSG, MAX_TOKEN_AGE_IN_MS, MAX_API_CALLS } = require('./constants')
 
 const express = require('express')
 const app = express()
@@ -24,14 +24,14 @@ app.use(cookieParser())
 const users = []
 
 /// ////////////////////
-// Get Current Users //
+// Get Current Users ///
 /// ////////////////////
 app.get('/users', (_, res) => {
   res.json(users)
 })
 
 /// /////////////////////////////////////////
-// Create User, Hash Password, Store User //
+// Create User, Hash Password, Store User ///
 /// /////////////////////////////////////////
 app.post('/users', async (req, res) => {
   try {
@@ -56,7 +56,7 @@ app.post('/users', async (req, res) => {
 })
 
 /// /////////////
-// User Login //
+// User Login ///
 /// /////////////
 app.post('/users/login', async (req, res) => {
   if (req.body.email == null || req.body.password == null) {
@@ -91,13 +91,13 @@ app.post('/users/login', async (req, res) => {
 })
 
 /// ///////////////
-// User API URL //
+// User API URL ///
 /// ///////////////
 
 app.listen(3000, () => console.log('Server started; listening on Port 3000'))
 
 /// /////////////
-// Middleware //
+// Middleware ///
 /// /////////////
 function authenticateToken (req, res, next) {
   const token = req.cookies.token

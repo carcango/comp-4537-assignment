@@ -1,5 +1,5 @@
-import { isEmail } from 'validator'
-import { hash } from 'bcrypt'
+const isEmail = require('validator').isEmail
+const hash = require('bcrypt').hash
 
 const INITIAL_API_COUNTER = 0
 const SALT_ROUNDS = 10
@@ -38,4 +38,4 @@ class User {
   }
 }
 
-export default User
+module.exports = User

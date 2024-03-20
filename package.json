@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "devStart": "nodemon backend/authentication.js"
+    "devStart": "nodemon authentication.js"
   },
   "keywords": [],
   "author": "",
