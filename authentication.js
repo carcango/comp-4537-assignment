@@ -5,6 +5,10 @@
 // TODO: Add user-facing messages to separate file
 
 import User from './user'
+import { ERROR_CODES, ERROR_MESSAGES } from './constants'
+
+const MAX_API_CALLS       = 20
+const MAX_TOKEN_AGE       = 3600000 // 1 hour in milliseconds
 
 const express      = require('express')
 const app          = express()
@@ -13,32 +17,6 @@ const jwt          = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 
 require('dotenv').config() // Load environment variable: secret key for JWT
-
-////////////////////////////
-// Error Codes & Messages //
-////////////////////////////
-const CREATED_USER_201 = 201
-const BAD_REQUEST_400  = 400
-const UNAUTHORIZED_401 = 401
-const FORBIDDEN_403    = 403
-const NOT_FOUND_404    = 404
-const CONFLICT_409     = 409
-const SERVER_ERROR     = 500
-
-const MSG_200 = "OK"
-const MSG_201 = "User successfully registered!"
-const MSG_400 = "Missing email or password"
-const MSG_401 = "You're not authorized to access this resource"
-const MSG_403 = "You've exceeded your API call limit"
-const MSG_404 = "User not found"
-const MSG_409 = "User already exists"
-const MSG_500 = "Internal Server Error"
-
-const SECRET_KEY          = process.env.SECRET_KEY // For JWT
-const SALT_ROUNDS         = 10 // User for password hashing
-const MAX_API_CALLS       = 20
-const MAX_TOKEN_AGE       = 3600000 // 1 hour in milliseconds
-const INITIAL_API_COUNTER = 0
 
 // Allows Express to parse JSON and cookie data for middleware
 app.use(express.json())
