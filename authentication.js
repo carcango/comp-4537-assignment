@@ -5,7 +5,7 @@
 // TODO: Add user-facing messages to separate file
 
 import User from './user'
-import { ERROR_CODES, ERROR_MESSAGES, MAX_TOKEN_AGE_IN_MS, MAX_API_CALLS } from './constants'
+import { RESPONSE_CODES, RESPONSE_MSG, MAX_TOKEN_AGE_IN_MS, MAX_API_CALLS } from './constants'
 
 const express = require('express')
 const app = express()
@@ -37,21 +37,21 @@ app.post('/users', async (req, res) => {
   try {
     // Check payload for email and password; ensure they exist
     if (req.body.email == null || req.body.password == null) {
-      return res.status(ERROR_CODES.BAD_REQUEST_400).send(ERROR_MESSAGES.MSG_400)
+      return res.status(RESPONSE_CODES.BAD_REQUEST_400).send(RESPONSE_MSG.MISSING_INFO_400)
     }
 
     // Will need to update this to use database search
     if (users.find(user => user.email === req.body.email)) {
-      return res.status(ERROR_CODES.CONFLICT_409).send(ERROR_MESSAGES.MSG_409)
+      return res.status(RESPONSE_CODES.CONFLICT_409).send(RESPONSE_MSG.ALREADY_EXISTS_409)
     }
 
     const user = await User.create(req.body.email, req.body.password)
 
     users.push(user)
-    res.status(ERROR_CODES.CREATED_USER_201).send(ERROR_MESSAGES.MSG_201)
+    res.status(RESPONSE_CODES.CREATED_USER_201).send(RESPONSE_MSG.SUCCESSFULLY_REGISTERED_201)
   } catch (error) {
     console.log(error)
-    res.status(ERROR_CODES.SERVER_ERROR).send(ERROR_MESSAGES.MSG_500)
+    res.status(RESPONSE_CODES.SERVER_ERROR_500).send(RESPONSE_MSG.SERVER_ERROR_500)
   }
 })
 
@@ -60,12 +60,12 @@ app.post('/users', async (req, res) => {
 /// /////////////
 app.post('/users/login', async (req, res) => {
   if (req.body.email == null || req.body.password == null) {
-    return res.status(ERROR_CODES.BAD_REQUEST_400).send(ERROR_MESSAGES.MSG_400)
+    return res.status(RESPONSE_CODES.BAD_REQUEST_400).send(RESPONSE_MSG.MISSING_INFO_400)
   }
 
   const user = users.find(user => user.email === req.body.email)
   if (user == null) {
-    return res.status(ERROR_CODES.NOT_FOUND_404).send(ERROR_MESSAGES.MSG_404)
+    return res.status(RESPONSE_CODES.NOT_FOUND_404).send(RESPONSE_MSG.NOT_FOUND_404)
   }
 
   try {
@@ -81,12 +81,12 @@ app.post('/users/login', async (req, res) => {
         secure: false,
         maxAge: MAX_TOKEN_AGE_IN_MS
       })
-        .send(ERROR_MESSAGES.MSG_200)
+        .send(RESPONSE_MSG.OK_200)
     } else {
-      res.send(ERROR_MESSAGES.MSG_401)
+      res.send(RESPONSE_MSG.UNAUTHORIZED_401)
     }
   } catch {
-    res.status(ERROR_CODES.SERVER_ERROR_500).send(ERROR_MESSAGES.MSG_500)
+    res.status(RESPONSE_CODES.SERVER_ERROR_500).send(RESPONSE_MSG.SERVER_ERROR_500)
   }
 })
 
@@ -102,15 +102,15 @@ app.listen(3000, () => console.log('Server started; listening on Port 3000'))
 function authenticateToken (req, res, next) {
   const token = req.cookies.token
 
-  if (token == null) return res.sendStatus(ERROR_CODES.UNAUTHORIZED_401)
+  if (token == null) return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
-    if (err) return res.sendStatus(ERROR_CODES.FORBIDDEN_403)
+    if (err) return res.sendStatus(RESPONSE_CODES.FORBIDDEN_403)
 
     // Use email from decoded token to find user
     // Update to check database for user
     const user = users.find(user => user.email === decoded.userEmail)
-    if (!user) return res.sendStatus(ERROR_CODES.UNAUTHORIZED_401)
+    if (!user) return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
 
     req.user = user
 
@@ -125,13 +125,13 @@ function trackApiCalls (req, res, next) {
   const user = users.find(user => user.email === userEmail)
 
   if (!user) {
-    return res.status(ERROR_CODES.UNAUTHORIZED_401).send(ERROR_MESSAGES.MSG_401)
+    return res.status(RESPONSE_CODES.UNAUTHORIZED_401).send(RESPONSE_MSG.UNAUTHORIZED_401)
   }
 
   user.api_call_counter++
 
   if (user.api_call_counter > MAX_API_CALLS) {
-    return res.status(ERROR_CODES.FORBIDDEN_403).send(ERROR_MESSAGES.MSG_403)
+    return res.status(RESPONSE_CODES.FORBIDDEN_403).send(RESPONSE_MSG.API_LIMIT_EXCEEDED_403)
   }
 
   // Update counter in database for persistence (to be implemented)
