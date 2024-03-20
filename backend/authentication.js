@@ -43,9 +43,10 @@ app.get('/users', (req, res) => {
 // Create User, Hash Password, Store User //
 ////////////////////////////////////////////
 app.post('/users', async (req, res) => {
+    console.log(req.body)
     try {
 
-        if (req.body.name == null || req.body.email == null || req.body.password == null) {
+        if (req.body.email == null || req.body.password == null) {
             return res.status(BAD_REQUEST_400).send("Missing name, email, or password")
         }
 
@@ -59,13 +60,12 @@ app.post('/users', async (req, res) => {
         const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS)
 
         const user = {
-            name: req.body.name,
             email: req.body.email,
             password: hashedPassword,
             api_call_counter: 0
         }
         users.push(user)
-        res.status(CREATED_USER_201).send()
+        res.status(CREATED_USER_201).send("User successfully registered!")
 
     } catch {
         res.status(INTERNAL_SERVER_ERROR_500).send()
@@ -77,6 +77,10 @@ app.post('/users', async (req, res) => {
 ////////////////
 
 app.post("/users/login", async (req, res) => {
+
+    if (req.body.email == null || req.body.password == null) {
+        return res.status(BAD_REQUEST_400).send("Missing name, email, or password")
+    }
 
     const user = users.find(user => user.email === req.body.email);
     if (user == null) {
