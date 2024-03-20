@@ -139,7 +139,7 @@ app.post("/chat", async (req, res) => {
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
         system:
-          "Roleplay as a text-based adventure game. Keep your responses to a couple sentences or less for a dynamic experience.",
+          "Roleplay as a text-based fantasy adventure game. Keep your responses to a couple sentences or less for a dynamic experience.",
         messages: messages,
         max_tokens: 200,
       }),
