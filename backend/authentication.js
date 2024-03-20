@@ -72,12 +72,18 @@ app.post('/users', async (req, res) => {
         means more time, more complexity, and more security. */
         const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS)
 
-        const useemail: req.body.email,
-    d: hashedPassword,
-            api_car: INITIAL_API_COUNTER
-        }.push(user)
-        res.status(CREATED_USER_201).send(M } cas.status(SERVER_ERROR)   .send(MSG_500)
-     }
+        const user = {
+            email: req.body.email,
+            password: hashedPassword,
+            api_call_counter: INITIAL_API_COUNTER
+        }
+
+        users.push(user)
+        res.status(CREATED_USER_201).send(MSG_201)
+
+    } catch {
+        res.status(SERVER_ERROR).send(MSG_500)
+    }
 })
 
 ////////////////
@@ -103,12 +109,17 @@ app.post("/users/login", async (req, res) => {
             /* Set token in HTTP-only cookie
             > httpOnly: true - cookie cannot be accessed by client-side scripts
             > secure: true - cookie will only be sent over HTTPS; set to false for testing */
-            res.cookie('token', tokehttpOnly: true,
-                sece,
-                maxAge: MAXE})
-                .send(MSG_ else {
-            res.send(M }
-    } cas.status(SERVE R_ERROR)   .send(MSG_500)
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: false,
+                maxAge: MAX_TOKEN_AGE})
+                .send(MSG_200)
+
+        } else {
+            res.send(MSG_401)
+        }
+    } catch {
+        res.status(SERVER_ERROR).send(MSG_500)
     }
 })
 
