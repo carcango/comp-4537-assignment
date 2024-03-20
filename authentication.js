@@ -5,10 +5,7 @@
 // TODO: Add user-facing messages to separate file
 
 import User from './user'
-import { ERROR_CODES, ERROR_MESSAGES } from './constants'
-
-const MAX_API_CALLS       = 20
-const MAX_TOKEN_AGE       = 3600000 // 1 hour in milliseconds
+import { ERROR_CODES, ERROR_MESSAGES, MAX_TOKEN_AGE_IN_MS } from './constants'
 
 const express      = require('express')
 const app          = express()
@@ -75,7 +72,7 @@ app.post("/users/login", async (req, res) => {
         if (await bcrypt.compare(req.body.password, user.password)) {
 
             // Create token; user email is the payload (used to identify user later on)
-            const token = jwt.sign({userEmail : user.email}, SECRET_KEY, {expiresIn: MAX_TOKEN_AGE})
+            const token = jwt.sign({userEmail : user.email}, SECRET_KEY, {expiresIn: MAX_TOKEN_AGE_IN_MS})
 
             /* Set token in HTTP-only cookie
             > httpOnly: true - cookie cannot be accessed by client-side scripts
@@ -83,7 +80,7 @@ app.post("/users/login", async (req, res) => {
             res.cookie('token', token, {
                 httpOnly: true,
                 secure: false,
-                maxAge: MAX_TOKEN_AGE})
+                maxAge: MAX_TOKEN_AGE_IN_MS})
                 .send(MSG_200)
 
         } else {
@@ -100,46 +97,3 @@ app.post("/users/login", async (req, res) => {
 
 
 app.listen(3000, ()=> console.log("Server started; listening on Port 3000"))
-
-
-//////////////////////////
-// MIDDLEWARE FUNCTIONS //
-//////////////////////////
-function authenticateToken(req, res, next) {
-    const token = req.cookies.token
-
-    if (token == null) return res.sendStatus(UNAUTHORIZED_401)
-
-    jwt.verify(token, SECRET_KEY, (err, decoded) => {
-        if (err) return res.sendStatus(FORBIDDEN_403)
-
-        // Use email from decoded token to find user
-        const user = users.find(user => user.email === decoded.userEmail)
-        if (!user) return res.sendStatus(UNAUTHORIZED_401)
-
-        req.user = user
-
-        next()
-    })
-}
-
-function trackApiCalls(req, res, next) {
-
-    // Get user email from decoded token; find user based on email
-    const userEmail = req.user.email
-    const user = users.find(user => user.email === userEmail)
-
-    if (!user) {
-        return res.status(UNAUTHORIZED_401).send(MSG_401)
-    }
-
-    user.api_call_counter++
-
-    if (user.api_call_counter > MAX_API_CALLS) {
-        return res.status(FORBIDDEN_403).send(MSG_403)
-    }
-
-    // Update counter in database for persistence (to be implemented)
-
-    next()
-}
