@@ -5,11 +5,10 @@
 // TODO: Add user-facing messages to separate file
 
 import User from './user'
-import { ERROR_CODES, ERROR_MESSAGES, MAX_TOKEN_AGE_IN_MS } from './constants'
+import { ERROR_CODES, ERROR_MESSAGES, MAX_TOKEN_AGE_IN_MS, MAX_API_CALLS } from './constants'
 
 const express      = require('express')
 const app          = express()
-
 const jwt          = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 
@@ -95,5 +94,46 @@ app.post("/users/login", async (req, res) => {
 // User API URL //
 //////////////////
 
-
 app.listen(3000, ()=> console.log("Server started; listening on Port 3000"))
+
+////////////////
+// Middleware //
+////////////////
+function authenticateToken(req, res, next) {
+    const token = req.cookies.token
+
+    if (token == null) return res.sendStatus(ERROR_CODES.UNAUTHORIZED_401)
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) return res.sendStatus(ERROR_CODES.FORBIDDEN_403)
+
+        // Use email from decoded token to find user
+        const user = users.find(user => user.email === decoded.userEmail)
+        if (!user) return res.sendStatus(ERROR_CODES.UNAUTHORIZED_401)
+
+        req.user = user
+
+        next()
+    })
+}
+
+function trackApiCalls(req, res, next) {
+
+    // Get user email from decoded token; find user based on email
+    const userEmail = req.user.email
+    const user = users.find(user => user.email === userEmail)
+
+    if (!user) {
+        return res.status(ERROR_CODES.UNAUTHORIZED_401).send(ERROR_MESSAGES.MSG_401)
+    }
+
+    user.api_call_counter++
+
+    if (user.api_call_counter > MAX_API_CALLS) {
+        return res.status(ERROR_CODES.FORBIDDEN_403).send(ERROR_MESSAGESMSG_403)
+    }
+
+    // Update counter in database for persistence (to be implemented)
+
+    next()
+}
