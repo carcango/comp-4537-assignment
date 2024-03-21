@@ -147,7 +147,7 @@ app.post("/chat", async (req, res) => {
     });
 
     const data = await response.json();
-    console.log(data);
+    // console.log(data);
     if (response.ok) {
       const assistantReply = data.content[0].text;
       res.json({ message: assistantReply });
@@ -178,10 +178,10 @@ app.post("/generate-image", async (req, res) => {
       prompt: prompt,
       n: 1,
     });
-    console.log(response);
+    // console.log(response);
 
     const imageUrl = response.data[0].url;
-    console.log(imageUrl);
+    // console.log(imageUrl);
     res.json({ imageUrl });
   } catch (error) {
     console.error("Error generating image:", error);
