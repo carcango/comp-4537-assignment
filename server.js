@@ -14,6 +14,7 @@ const {
 const cors = require("cors");
 const fetch = require("node-fetch");
 const dotenv = require("dotenv");
+const OpenAI = require("openai");
 
 dotenv.config({ path: ".env.local" });
 
@@ -156,6 +157,34 @@ app.post("/chat", async (req, res) => {
     }
   } catch (error) {
     console.error("Error:", error);
+    res.status(500).json({ error: "An error occurred" });
+  }
+});
+
+/// ///////////////////////
+// Handle Chat Messages ///
+/// ///////////////////////
+const OPENAI_API_KEY = process.env.OPENAI_API_TOKEN;
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+});
+
+app.post("/generate-image", async (req, res) => {
+  const { prompt } = req.body;
+
+  try {
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      n: 1,
+    });
+    console.log(response);
+
+    const imageUrl = response.data[0].url;
+    console.log(imageUrl);
+    res.json({ imageUrl });
+  } catch (error) {
+    console.error("Error generating image:", error);
     res.status(500).json({ error: "An error occurred" });
   }
 });
