@@ -20,7 +20,12 @@ dotenv.config({ path: ".env.local" });
 
 const express = require("express");
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3001",
+    credentials: true,
+  })
+); // Enable CORS for all routes
 app.use(express.json());
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -32,6 +37,11 @@ require("dotenv").config(); // Load environment variable: secret key for JWT
 // Allows Express to parse JSON and cookie data for middleware
 app.use(express.json());
 app.use(cookieParser());
+
+const OPENAI_API_KEY = process.env.OPENAI_API_TOKEN;
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+});
 
 // Array to store users; used for testing, will be replaced with database
 const users = [];
@@ -64,6 +74,8 @@ app.post("/users", async (req, res) => {
 
     const user = await User.create(req.body.email, req.body.password);
 
+    console.log(user);
+
     users.push(user);
     res
       .status(RESPONSE_CODES.CREATED_USER_201)
@@ -80,40 +92,44 @@ app.post("/users", async (req, res) => {
 // User Login ///
 /// /////////////
 app.post("/users/login", async (req, res) => {
-  if (req.body.email == null || req.body.password == null) {
-    return res
-      .status(RESPONSE_CODES.BAD_REQUEST_400)
-      .send(RESPONSE_MSG.MISSING_INFO_400);
-  }
-
-  const user = users.find((user) => user.email === req.body.email);
-  if (user == null) {
-    return res
-      .status(RESPONSE_CODES.NOT_FOUND_404)
-      .send(RESPONSE_MSG.NOT_FOUND_404);
-  }
-
   try {
-    if (await bcrypt.compare(req.body.password, user.password)) {
-      // Create token; user email is the payload (used to identify user later on)
-      const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, {
-        expiresIn: MAX_TOKEN_AGE_IN_MS,
-      });
-
-      /* Set token in HTTP-only cookie
-            > httpOnly: true - cookie cannot be accessed by client-side scripts
-            > secure: true - cookie will only be sent over HTTPS; set to false for testing */
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: false,
-          maxAge: MAX_TOKEN_AGE_IN_MS,
-        })
-        .send(RESPONSE_MSG.OK_200);
-    } else {
-      res.send(RESPONSE_MSG.UNAUTHORIZED_401);
+    if (req.body.email == null || req.body.password == null) {
+      return res
+        .status(RESPONSE_CODES.BAD_REQUEST_400)
+        .send(RESPONSE_MSG.MISSING_INFO_400);
     }
-  } catch {
+    const user = users.find((user) => user.email === req.body.email);
+    if (user == null) {
+      return res
+        .status(RESPONSE_CODES.NOT_FOUND_404)
+        .send(RESPONSE_MSG.NOT_FOUND_404);
+    }
+    const isPasswordValid = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
+    if (!isPasswordValid) {
+      return res
+        .status(RESPONSE_CODES.UNAUTHORIZED_401)
+        .send(RESPONSE_MSG.UNAUTHORIZED_401);
+    }
+    // Create token; user email is the payload (used to identify user later on)
+    const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, {
+      expiresIn: MAX_TOKEN_AGE_IN_MS,
+    });
+    /* Set token in HTTP-only cookie
+          > httpOnly: true - cookie cannot be accessed by client-side scripts
+          > secure: true - cookie will only be sent over HTTPS; set to false for testing */
+    res
+      .cookie("token", token, {
+        httpOnly: false,
+        secure: false,
+        maxAge: MAX_TOKEN_AGE_IN_MS,
+      })
+      .status(RESPONSE_CODES.OK_200)
+      .send(RESPONSE_MSG.OK_200);
+  } catch (error) {
+    console.error(error);
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500);
@@ -164,10 +180,6 @@ app.post("/chat", async (req, res) => {
 /// ///////////////////////
 // Handle Chat Messages ///
 /// ///////////////////////
-const OPENAI_API_KEY = process.env.OPENAI_API_TOKEN;
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
 
 app.post("/generate-image", async (req, res) => {
   const { prompt } = req.body;
