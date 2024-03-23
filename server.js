@@ -16,8 +16,6 @@ const fetch = require('node-fetch')
 const dotenv = require('dotenv')
 const OpenAI = require('openai')
 const sequelize = require('./db')
-const Sequelize = require('sequelize') // Add this line to import Sequelize
-const SALT_ROUNDS = 10
 
 dotenv.config({ path: '.env.local' })
 
@@ -25,7 +23,7 @@ const express = require('express')
 const app = express()
 app.use(
   cors({
-    origin: 'http://localhost:3001',
+    origin: 'http://localhost:3000',
     credentials: true
   })
 ) // Enable CORS for all routes
@@ -172,6 +170,11 @@ app.post('/users/login', async (req, res) => {
       .send(RESPONSE_MSG.SERVER_ERROR_500)
   }
 })
+
+app.get('/verify-token', authenticateToken, (req, res) => {
+  res.status(200).send({ message: 'Token is valid' })
+})
+
 /// ///////////////////////
 // Handle Chat Messages ///
 /// ///////////////////////
@@ -243,7 +246,7 @@ app.post(
 /// ///////////////
 // User API URL ///
 /// ///////////////
-app.listen(3000, () => console.log('Server started; listening on Port 3000'))
+app.listen(4000, () => console.log('Server started; listening on Port 4000'))
 /// /////////////
 // Middleware ///
 /// /////////////
