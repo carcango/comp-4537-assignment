@@ -15,6 +15,9 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 const dotenv = require("dotenv");
 const OpenAI = require("openai");
+const sequelize = require("./db");
+const Sequelize = require("sequelize"); // Add this line to import Sequelize
+const SALT_ROUNDS = 10;
 
 dotenv.config({ path: ".env.local" });
 
@@ -43,14 +46,22 @@ const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
 });
 
-// Array to store users; used for testing, will be replaced with database
-const users = [];
+// Sync the database models
+sequelize.sync();
 
 /// ////////////////////
 // Get Current Users ///
 /// ////////////////////
-app.get("/users", (_, res) => {
-  res.json(users);
+app.get("/users", async (_, res) => {
+  try {
+    const users = await User.findAll();
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(RESPONSE_CODES.SERVER_ERROR_500)
+      .send(RESPONSE_MSG.SERVER_ERROR_500);
+  }
 });
 
 /// /////////////////////////////////////////
@@ -58,28 +69,39 @@ app.get("/users", (_, res) => {
 /// /////////////////////////////////////////
 app.post("/users", async (req, res) => {
   try {
-    // Check payload for email and password; ensure they exist
+    // Check payload for email, password; ensure they exist
     if (req.body.email == null || req.body.password == null) {
       return res
         .status(RESPONSE_CODES.BAD_REQUEST_400)
         .send(RESPONSE_MSG.MISSING_INFO_400);
     }
-
-    // Will need to update this to use database search
-    if (users.find((user) => user.email === req.body.email)) {
+    // Check if user already exists
+    console.log("Checking if user exists in /users on line 78");
+    if (
+      await User.findOne({
+        where: {
+          email: req.body.email,
+        },
+      })
+    ) {
       return res
         .status(RESPONSE_CODES.CONFLICT_409)
         .send(RESPONSE_MSG.ALREADY_EXISTS_409);
     }
+    console.log("Creating user in /users on line 90");
+    const user = await User.createUser({
+      email: req.body.email,
+      password: req.body.password,
+    });
 
-    const user = await User.create(req.body.email, req.body.password);
+    // Create token; user email is the payload (used to identify user later on)
+    const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, {
+      expiresIn: MAX_TOKEN_AGE_IN_MS,
+    });
 
-    console.log(user);
-
-    users.push(user);
     res
       .status(RESPONSE_CODES.CREATED_USER_201)
-      .send(RESPONSE_MSG.SUCCESSFULLY_REGISTERED_201);
+      .json({ token, message: RESPONSE_MSG.SUCCESSFULLY_REGISTERED_201 });
   } catch (error) {
     console.log(error);
     res
@@ -98,25 +120,40 @@ app.post("/users/login", async (req, res) => {
         .status(RESPONSE_CODES.BAD_REQUEST_400)
         .send(RESPONSE_MSG.MISSING_INFO_400);
     }
-    const user = users.find((user) => user.email === req.body.email);
+    console.log("Checking if user exists in /users/login on line 113");
+    const user = await User.findOne({
+      where: {
+        email: req.body.email,
+      },
+    });
+    // console.log("user is: ", user);
     if (user == null) {
       return res
         .status(RESPONSE_CODES.NOT_FOUND_404)
         .send(RESPONSE_MSG.NOT_FOUND_404);
     }
+    console.log(
+      "password is: " +
+        req.body.password +
+        " user.password is: " +
+        user.password
+    );
     const isPasswordValid = await bcrypt.compare(
       req.body.password,
       user.password
     );
     if (!isPasswordValid) {
+      console.log("password is not valid");
       return res
         .status(RESPONSE_CODES.UNAUTHORIZED_401)
         .send(RESPONSE_MSG.UNAUTHORIZED_401);
     }
+    console.log("password is valid");
     // Create token; user email is the payload (used to identify user later on)
     const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, {
       expiresIn: MAX_TOKEN_AGE_IN_MS,
     });
+
     /* Set token in HTTP-only cookie
           > httpOnly: true - cookie cannot be accessed by client-side scripts
           > secure: true - cookie will only be sent over HTTPS; set to false for testing */
@@ -127,7 +164,7 @@ app.post("/users/login", async (req, res) => {
         maxAge: MAX_TOKEN_AGE_IN_MS,
       })
       .status(RESPONSE_CODES.OK_200)
-      .send(RESPONSE_MSG.OK_200);
+      .json({ token }); // Send the token in the response data
   } catch (error) {
     console.error(error);
     res
@@ -135,16 +172,15 @@ app.post("/users/login", async (req, res) => {
       .send(RESPONSE_MSG.SERVER_ERROR_500);
   }
 });
-
 /// ///////////////////////
 // Handle Chat Messages ///
 /// ///////////////////////
 const API_URL = "https://api.anthropic.com";
 const API_TOKEN = process.env.ANTHROPIC_API_TOKEN;
 const ANTHROPIC_VERSION = "2023-06-01";
-
-app.post("/chat", async (req, res) => {
+app.post("/chat", authenticateToken, trackApiCalls, async (req, res) => {
   const { messages } = req.body;
+  console.log("chat request received with messages: " + messages);
   try {
     const response = await fetch(`${API_URL}/v1/messages`, {
       method: "POST",
@@ -161,12 +197,14 @@ app.post("/chat", async (req, res) => {
         max_tokens: 200,
       }),
     });
-
     const data = await response.json();
-    // console.log(data);
+    console.log(data);
     if (response.ok) {
       const assistantReply = data.content[0].text;
-      res.json({ message: assistantReply });
+      res.json({
+        message: assistantReply,
+        apiCallCounter: req.user.apiCallCounter,
+      });
     } else {
       console.error("Error:", data);
       res.status(500).json({ error: "An error occurred" });
@@ -178,78 +216,77 @@ app.post("/chat", async (req, res) => {
 });
 
 /// ///////////////////////
-// Handle Chat Messages ///
+// Handle Image requests ///
 /// ///////////////////////
-
-app.post("/generate-image", async (req, res) => {
-  const { prompt } = req.body;
-
-  try {
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-    });
-    // console.log(response);
-
-    const imageUrl = response.data[0].url;
-    // console.log(imageUrl);
-    res.json({ imageUrl });
-  } catch (error) {
-    console.error("Error generating image:", error);
-    res.status(500).json({ error: "An error occurred" });
+app.post(
+  "/generate-image",
+  authenticateToken,
+  trackApiCalls,
+  async (req, res) => {
+    const { prompt } = req.body;
+    try {
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: prompt,
+        n: 1,
+      });
+      // console.log(response);
+      const imageUrl = response.data[0].url;
+      // console.log(imageUrl);
+      res.json({ imageUrl, apiCallCounter: req.user.apiCallCounter });
+    } catch (error) {
+      console.error("Error generating image:", error);
+      res.status(500).json({ error: "An error occurred" });
+    }
   }
-});
-
+);
 /// ///////////////
 // User API URL ///
 /// ///////////////
-
 app.listen(3000, () => console.log("Server started; listening on Port 3000"));
-
 /// /////////////
 // Middleware ///
 /// /////////////
-function authenticateToken(req, res, next) {
-  const token = req.cookies.token;
+async function authenticateToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (authHeader == null)
+    return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401);
 
-  if (token == null) return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401);
-
-  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, SECRET_KEY, async (err, decoded) => {
     if (err) return res.sendStatus(RESPONSE_CODES.FORBIDDEN_403);
-
     // Use email from decoded token to find user
-    // Update to check database for user
-    const user = users.find((user) => user.email === decoded.userEmail);
+    console.log("finds user in authenticateToken on line 226");
+    const user = await User.findOne({
+      where: {
+        email: decoded.userEmail,
+      },
+    });
     if (!user) return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401);
-
     req.user = user;
-
     next();
   });
 }
-
-function trackApiCalls(req, res, next) {
+async function trackApiCalls(req, res, next) {
   // Get user email from decoded token; find user based on email
-  // Update to check database for user
   const userEmail = req.user.email;
-  const user = users.find((user) => user.email === userEmail);
-
+  console.log("finds user in trackApiCalls on line 241");
+  const user = await User.findOne({
+    where: {
+      email: userEmail,
+    },
+  });
   if (!user) {
     return res
       .status(RESPONSE_CODES.UNAUTHORIZED_401)
       .send(RESPONSE_MSG.UNAUTHORIZED_401);
   }
-
-  user.api_call_counter++;
-
-  if (user.api_call_counter > MAX_API_CALLS) {
+  user.apiCallCounter++;
+  await user.save();
+  if (user.apiCallCounter > MAX_API_CALLS) {
     return res
       .status(RESPONSE_CODES.FORBIDDEN_403)
       .send(RESPONSE_MSG.API_LIMIT_EXCEEDED_403);
   }
-
-  // Update counter in database for persistence (to be implemented)
-
   next();
 }

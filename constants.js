@@ -21,7 +21,7 @@ const RESPONSE_MSG = {
 };
 
 const MAX_API_CALLS = 20;
-const MAX_TOKEN_AGE_IN_MS = 3600000;
+const MAX_TOKEN_AGE_IN_MS = 360000;
 
 module.exports = {
   RESPONSE_CODES,
