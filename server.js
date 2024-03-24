@@ -33,8 +33,6 @@ const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 const SECRET_KEY = process.env.SECRET_KEY
 
-require('dotenv').config() // Load environment variable: secret key for JWT
-
 // Allows Express to parse JSON and cookie data for middleware
 app.use(express.json())
 app.use(cookieParser())
@@ -55,7 +53,6 @@ app.get('/users', async (_, res) => {
     const users = await User.findAll()
     res.json(users)
   } catch (error) {
-    console.error(error)
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500)
@@ -74,7 +71,6 @@ app.post('/users', async (req, res) => {
         .send(RESPONSE_MSG.MISSING_INFO_400)
     }
     // Check if user already exists
-    console.log('Checking if user exists in /users on line 78')
     if (
       await User.findOne({
         where: {
@@ -86,7 +82,7 @@ app.post('/users', async (req, res) => {
         .status(RESPONSE_CODES.CONFLICT_409)
         .send(RESPONSE_MSG.ALREADY_EXISTS_409)
     }
-    console.log('Creating user in /users on line 90')
+
     const user = await User.createUser({
       email: req.body.email,
       password: req.body.password
@@ -101,7 +97,6 @@ app.post('/users', async (req, res) => {
       .status(RESPONSE_CODES.CREATED_USER_201)
       .json({ token, message: RESPONSE_MSG.SUCCESSFULLY_REGISTERED_201 })
   } catch (error) {
-    console.log(error)
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500)
@@ -118,39 +113,32 @@ app.post('/users/login', async (req, res) => {
         .status(RESPONSE_CODES.BAD_REQUEST_400)
         .send(RESPONSE_MSG.MISSING_INFO_400)
     }
-    console.log('Checking if user exists in /users/login on line 113')
+
     const user = await User.findOne({
       where: {
         email: req.body.email
       }
     })
-    // console.log("user is: ", user);
+
     if (user == null) {
       return res
         .status(RESPONSE_CODES.NOT_FOUND_404)
         .send(RESPONSE_MSG.NOT_FOUND_404)
     }
-    console.log(
-      'password is: ' +
-        req.body.password +
-        ' user.password is: ' +
-        user.password
-    )
+
     const isPasswordValid = await bcrypt.compare(
       req.body.password,
       user.password
     )
+
     if (!isPasswordValid) {
-      console.log('password is not valid')
       return res
         .status(RESPONSE_CODES.UNAUTHORIZED_401)
         .send(RESPONSE_MSG.UNAUTHORIZED_401)
     }
-    console.log('password is valid')
+
     // Create token; user email is the payload (used to identify user later on)
-    const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, {
-      expiresIn: MAX_TOKEN_AGE_IN_MS
-    })
+    const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, { expiresIn: MAX_TOKEN_AGE_IN_MS })
 
     /* Set token in HTTP-only cookie
           > httpOnly: true - cookie cannot be accessed by client-side scripts
@@ -162,9 +150,8 @@ app.post('/users/login', async (req, res) => {
         maxAge: MAX_TOKEN_AGE_IN_MS
       })
       .status(RESPONSE_CODES.OK_200)
-      .json({ token }) // Send the token in the response data
+      .json({ message: RESPONSE_MSG.OK_200 })
   } catch (error) {
-    console.error(error)
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500)
@@ -183,7 +170,7 @@ const API_TOKEN = process.env.ANTHROPIC_API_TOKEN
 const ANTHROPIC_VERSION = '2023-06-01'
 app.post('/chat', authenticateToken, trackApiCalls, async (req, res) => {
   const { messages } = req.body
-  console.log('chat request received with messages: ' + messages)
+
   try {
     const response = await fetch(`${API_URL}/v1/messages`, {
       method: 'POST',
@@ -200,8 +187,9 @@ app.post('/chat', authenticateToken, trackApiCalls, async (req, res) => {
         max_tokens: 200
       })
     })
+
     const data = await response.json()
-    console.log(data)
+
     if (response.ok) {
       const assistantReply = data.content[0].text
       res.json({
@@ -209,11 +197,9 @@ app.post('/chat', authenticateToken, trackApiCalls, async (req, res) => {
         apiCallCounter: req.user.apiCallCounter
       })
     } else {
-      console.error('Error:', data)
       res.status(500).json({ error: 'An error occurred' })
     }
   } catch (error) {
-    console.error('Error:', error)
     res.status(500).json({ error: 'An error occurred' })
   }
 })
@@ -227,18 +213,16 @@ app.post(
   trackApiCalls,
   async (req, res) => {
     const { prompt } = req.body
+
     try {
       const response = await openai.images.generate({
         model: 'dall-e-3',
         prompt,
         n: 1
       })
-      // console.log(response);
       const imageUrl = response.data[0].url
-      // console.log(imageUrl);
       res.json({ imageUrl, apiCallCounter: req.user.apiCallCounter })
     } catch (error) {
-      console.error('Error generating image:', error)
       res.status(500).json({ error: 'An error occurred' })
     }
   }
@@ -247,18 +231,18 @@ app.post(
 // User API URL ///
 /// ///////////////
 app.listen(4000, () => console.log('Server started; listening on Port 4000'))
+
 /// /////////////
 // Middleware ///
 /// /////////////
 async function authenticateToken (req, res, next) {
-  const authHeader = req.headers.authorization
-  if (authHeader == null) { return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401) }
+  const token = req.cookies.token
+  if (token == null) return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
 
-  const token = authHeader.split(' ')[1]
   jwt.verify(token, SECRET_KEY, async (err, decoded) => {
     if (err) return res.sendStatus(RESPONSE_CODES.FORBIDDEN_403)
+
     // Use email from decoded token to find user
-    console.log('finds user in authenticateToken on line 226')
     const user = await User.findOne({
       where: {
         email: decoded.userEmail
@@ -269,10 +253,11 @@ async function authenticateToken (req, res, next) {
     next()
   })
 }
+
 async function trackApiCalls (req, res, next) {
   // Get user email from decoded token; find user based on email
   const userEmail = req.user.email
-  console.log('finds user in trackApiCalls on line 241')
+
   const user = await User.findOne({
     where: {
       email: userEmail

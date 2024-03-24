@@ -25,25 +25,16 @@ const User = sequelize.define('User', {
 // Creating a user is asynchronous because hashing can be slow
 User.createUser = async function (userData) {
   const { email, password } = userData
-  console.log(email)
-  console.log(password)
-  // Check if user email already registered
-  console.log('Checking if user exists in User.createUser on line 33')
-  const existingUser = await User.findOne({
-    where: {
-      email
-    }
-  })
+  const existingUser = await User.findOne({ where: { email } })
+
   if (existingUser) {
     throw new Error('Email is already registered')
   }
-  // Check if password is provided
   if (!password) {
     throw new Error('Password is required')
   }
-  // Await hashing because it can be slow
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
-  console.log('Creating user in User.createUser on line 49')
   return await User.create({ email, password: hashedPassword })
 }
+
 module.exports = User
