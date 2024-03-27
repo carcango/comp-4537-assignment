@@ -21,18 +21,8 @@ dotenv.config({ path: '.env.local' })
 
 const express = require('express')
 const app = express()
-const allowedOrigins = ['http://localhost:3000/', 'https://comp-4537-frontend.vercel.app/']
 app.use(cors({
   origin: (origin, cb) => cb(null, true),
-  // origin: function (origin, callback) {
-  //   // allow requests with no origin (like mobile apps or curl requests)
-  //   if (!origin) return callback(null, true)
-  //   if (allowedOrigins.indexOf(origin) === -1) {
-  //     const msg = 'The CORS policy for this site does not allow access from the specified Origin.'
-  //     return callback(new Error(msg), false)
-  //   }
-  //   return callback(null, true)
-  // },
   credentials: true // reflect the request's credentials mode
 })) // Enable CORS for all routes
 app.options('*', cors())
