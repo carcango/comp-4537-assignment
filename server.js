@@ -23,10 +23,10 @@ const express = require('express')
 const app = express()
 app.use(
   cors({
-    origin: '*',
     credentials: true
   })
 ) // Enable CORS for all routes
+app.options('*', cors())
 app.use(express.json())
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
