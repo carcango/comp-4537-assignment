@@ -23,7 +23,7 @@ const express = require('express')
 const app = express()
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: '*',
     credentials: true
   })
 ) // Enable CORS for all routes
@@ -230,7 +230,7 @@ app.post(
 /// ///////////////
 // User API URL ///
 /// ///////////////
-app.listen(4000, () => console.log('Server started; listening on Port 4000'))
+app.listen(process.env.PORT, () => console.log(`Server started; listening on Port ${process.env.PORT}`))
 
 /// /////////////
 // Middleware ///
