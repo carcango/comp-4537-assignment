@@ -53,6 +53,7 @@ app.get('/users', async (_, res) => {
     const users = await User.findAll()
     res.json(users)
   } catch (error) {
+    logError('users', 'Error retrieving users! ' + error)
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500)
@@ -97,6 +98,7 @@ app.post('/users', async (req, res) => {
       .status(RESPONSE_CODES.CREATED_USER_201)
       .json({ token, message: RESPONSE_MSG.SUCCESSFULLY_REGISTERED_201 })
   } catch (error) {
+    logError('users', 'Error creating user! ' + error)
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500)
@@ -152,6 +154,7 @@ app.post('/users/login', async (req, res) => {
       .status(RESPONSE_CODES.OK_200)
       .json({ message: RESPONSE_MSG.OK_200 })
   } catch (error) {
+    logError('users/login', 'Error on user login! ' + error)
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500)
@@ -200,6 +203,7 @@ app.post('/chat', authenticateToken, trackApiCalls, async (req, res) => {
       res.status(500).json({ error: 'An error occurred' })
     }
   } catch (error) {
+    logError('chat', 'Error POSTing chat message! ' + error)
     res.status(500).json({ error: 'An error occurred' })
   }
 })
@@ -223,6 +227,7 @@ app.post(
       const imageUrl = response.data[0].url
       res.json({ imageUrl, apiCallCounter: req.user.apiCallCounter })
     } catch (error) {
+      logError('generate-image', 'Error generating image! ' + error)
       res.status(500).json({ error: 'An error occurred' })
     }
   }
@@ -237,10 +242,16 @@ app.listen(process.env.PORT, () => console.log(`Server started; listening on Por
 /// /////////////
 async function authenticateToken (req, res, next) {
   const token = req.cookies.token
-  if (token == null) return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
+  if (token == null) {
+    logError('authToken', 'Client request lacked authentication token. Unable to verify request!')
+    return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
+  }
 
   jwt.verify(token, SECRET_KEY, async (err, decoded) => {
-    if (err) return res.sendStatus(RESPONSE_CODES.FORBIDDEN_403)
+    if (err) {
+      logError('authToken', 'Unable to sign JWT token! ' + err)
+      return res.sendStatus(RESPONSE_CODES.FORBIDDEN_403)
+    }
 
     // Use email from decoded token to find user
     const user = await User.findOne({
@@ -248,7 +259,10 @@ async function authenticateToken (req, res, next) {
         email: decoded.userEmail
       }
     })
-    if (!user) return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
+    if (!user) {
+      logError('authToken', `Unregistered user ${decoded.userEmail} attempted to authenticate!`)
+      return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
+    }
     req.user = user
     next()
   })
@@ -276,4 +290,9 @@ async function trackApiCalls (req, res, next) {
       .send(RESPONSE_MSG.API_LIMIT_EXCEEDED_403)
   }
   next()
+}
+
+function logError (route, error) {
+  const timeString = Date.now().toString()
+  console.error(`[${timeString}][${route}] ${error}`)
 }
