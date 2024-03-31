@@ -50,12 +50,13 @@ app.get('/users', async (_, res) => {
   }
 })
 
+app.post('/users', userRegistration)
+app.post('/users/login', userLogin)
+
+// This is the issue
 app.get('/verify-token', authenticateToken, (req, res) => {
   res.json({ message: 'Token is valid', user: req.user })
 })
-
-app.post('/users', userRegistration)
-app.post('/users/login', userLogin)
 
 app.post(
   '/chat',
