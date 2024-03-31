@@ -4,7 +4,6 @@ const User = require('../models/user') // Adjust the path as needed
 const {
   RESPONSE_CODES,
   RESPONSE_MSG,
-  SECRET_KEY,
   MAX_TOKEN_AGE_IN_MS
 } = require('../constants') // Adjust the path as needed
 
@@ -70,7 +69,7 @@ exports.userLogin = async (req, res) => {
     // If password is valid, create a token and send it to user via cookie
     const token = jwt.sign(
       { userEmail: existingUser.email },
-      SECRET_KEY,
+      process.env.SECRET_KEY,
       { expiresIn: MAX_TOKEN_AGE_IN_MS })
 
     res.cookie('token', token,
