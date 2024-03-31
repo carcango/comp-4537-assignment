@@ -55,16 +55,10 @@ app.get('/users', async (_, res) => {
   }
 })
 
-// Handle user registration and login
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)
-
-// Handle chat messages
 app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
-
-// Handle image generation
 app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
-
 app.listen(4000, () => console.log(`Server started; listening on Port ${4000}`))
 
 // app.listen(process.env.PORT, () => console.log(`Server started; listening on Port ${process.env.PORT}`))
