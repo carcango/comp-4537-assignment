@@ -15,7 +15,7 @@ dotenv.config({ path: '.env.local' })
 const express = require('express')
 const app = express()
 
-const { authenticateToken } = require('./middleware/userAuthentication')
+const { authenticateToken } = require('./middleware/authenticateToken')
 const { trackApiCalls } = require('./middleware/apiCountTracking')
 
 const { userRegistration, userLogin } = require('./controllers/authController')
