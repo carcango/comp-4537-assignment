@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt')
 
 // Constants for user model
 const API_START_COUNT = 0
-const PASSWORD_SALTING = 10
+const HASHING_ROUNDS = 10
 
 const User = sequelize.define('User', {
   email: {
@@ -44,9 +44,9 @@ User.createUser = async function (userData) {
     throw new Error('Password is required')
   }
 
-  // Hash password before saving it to the databse
-  const hashedPassword = await bcrypt.hash(password, PASSWORD_SALTING)
-  return await User.create({ email, password: hashedPassword })
+  // Hash password before saving it to the database
+  const hashedPassword = await bcrypt.hash(password, HASHING_ROUNDS)
+  return User.create({ email, password: hashedPassword })
 }
 
 module.exports = User
