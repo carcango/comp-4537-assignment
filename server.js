@@ -26,7 +26,6 @@ app.use(cors({
   credentials: true // reflect the request's credentials mode
 })) // Enable CORS for all routes
 app.options('*', cors())
-app.use(express.json())
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
@@ -140,14 +139,10 @@ app.post('/users/login', async (req, res) => {
 
     // Create token; user email is the payload (used to identify user later on)
     const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, { expiresIn: MAX_TOKEN_AGE_IN_MS })
-
-    /* Set token in HTTP-only cookie
-          > httpOnly: true - cookie cannot be accessed by client-side scripts
-          > secure: true - cookie will only be sent over HTTPS; set to false for testing */
     res
       .cookie('token', token, {
-        httpOnly: false,
-        secure: false,
+        httpOnly: true,
+        secure: true,
         maxAge: MAX_TOKEN_AGE_IN_MS
       })
       .status(RESPONSE_CODES.OK_200)
