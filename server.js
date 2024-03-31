@@ -1,5 +1,3 @@
-// TODO: Create separate user search function (update for database search)
-// TODO: Add specific route for API calls; add middleware to track API calls
 // TODO: Add user-facing messages to separate file
 
 const User = require('./models/user')
@@ -40,9 +38,6 @@ app.use(cookieParser())
 // Sync the database models
 sequelize.sync()
 
-/// ////////////////////
-// Get Current Users ///
-/// ////////////////////
 app.get('/users', async (_, res) => {
   try {
     const users = await User.findAll()
