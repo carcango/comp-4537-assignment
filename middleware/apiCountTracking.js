@@ -5,7 +5,7 @@ const {
   MAX_API_CALLS
 } = require('../constants')
 
-const trackApiCalls = async (req, res, next) => {
+exports.trackApiCalls = async (req, res, next) => {
   const userEmail = req.user.email
 
   const user = await User.findOne({ where: { email: userEmail } })
@@ -23,5 +23,3 @@ const trackApiCalls = async (req, res, next) => {
   }
   next()
 }
-
-module.exports = { trackApiCalls }

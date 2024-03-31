@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const { User } = require('../models/user')
 const { RESPONSE_CODES, RESPONSE_MSG } = require('../constants')
 
-const authenticateToken = async (req, res, next) => {
+exports.authenticateToken = async (req, res, next) => {
   // Extract token from request; if token is missing, return 401, else verify token
   const token = req.cookies.token
   if (token == null) {
@@ -33,5 +33,3 @@ const authenticateToken = async (req, res, next) => {
     return res.status(RESPONSE_CODES.FORBIDDEN_403).send(RESPONSE_MSG.FORBIDDEN_403)
   }
 }
-
-module.exports = { authenticateToken }
