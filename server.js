@@ -50,10 +50,27 @@ app.get('/users', async (_, res) => {
   }
 })
 
+app.get('/verify-token', authenticateToken, (req, res) => {
+  res.json({ message: 'Token is valid', user: req.user })
+})
+
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)
-app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
-app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
+
+app.post(
+  '/chat',
+  authenticateToken,
+  trackApiCalls,
+  handleChatMessages
+)
+
+app.post(
+  '/generate-image',
+  authenticateToken,
+  trackApiCalls,
+  handleImageGeneration
+)
+
 app.listen(4000, () => console.log(`Server started; listening on Port ${4000}`))
 
 // app.listen(process.env.PORT, () => console.log(`Server started; listening on Port ${process.env.PORT}`))

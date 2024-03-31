@@ -5,7 +5,7 @@ const { RESPONSE_CODES, RESPONSE_MSG } = require('../constants')
 exports.authenticateToken = async (req, res, next) => {
   // Extract token from request; if token is missing, return 401, else verify token
   const token = req.cookies.token
-  if (token == null) {
+  if (!token) {
     return res.status(RESPONSE_CODES.UNAUTHORIZED_401).send(RESPONSE_MSG.UNAUTHORIZED_401)
   }
 
@@ -14,7 +14,7 @@ exports.authenticateToken = async (req, res, next) => {
     or expired, it will throw an error, which we handle in the catch block. If the
     token is valid, it contains the user's email, used for authentication. */
     const decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    const user = await User.findONe({
+    const user = await User.findOne({
       where: {
         email: decodedToken.userEmail
       }
