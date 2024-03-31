@@ -48,7 +48,7 @@ app.get('/users', async (_, res) => {
     const users = await User.findAll()
     res.json(users)
   } catch (error) {
-    logError('users', 'Error retrieving users! ' + error)
+    console.error('Error getting users! ' + error)
     res
       .status(RESPONSE_CODES.SERVER_ERROR_500)
       .send(RESPONSE_MSG.SERVER_ERROR_500)
