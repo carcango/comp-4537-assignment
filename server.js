@@ -21,6 +21,7 @@ dotenv.config({ path: '.env.local' })
 
 const express = require('express')
 const app = express()
+const authenticateToken = require('./authMiddleware')
 app.use(cors({
   origin: (origin, cb) => cb(null, true),
   credentials: true // reflect the request's credentials mode
@@ -234,33 +235,6 @@ app.listen(process.env.PORT, () => console.log(`Server started; listening on Por
 /// /////////////
 // Middleware ///
 /// /////////////
-async function authenticateToken (req, res, next) {
-  const token = req.cookies.token
-  if (token == null) {
-    logError('authToken', 'Client request lacked authentication token. Unable to verify request!')
-    return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
-  }
-
-  jwt.verify(token, SECRET_KEY, async (err, decoded) => {
-    if (err) {
-      logError('authToken', 'Unable to sign JWT token! ' + err)
-      return res.sendStatus(RESPONSE_CODES.FORBIDDEN_403)
-    }
-
-    // Use email from decoded token to find user
-    const user = await User.findOne({
-      where: {
-        email: decoded.userEmail
-      }
-    })
-    if (!user) {
-      logError('authToken', `Unregistered user ${decoded.userEmail} attempted to authenticate!`)
-      return res.sendStatus(RESPONSE_CODES.UNAUTHORIZED_401)
-    }
-    req.user = user
-    next()
-  })
-}
 
 async function trackApiCalls (req, res, next) {
   // Get user email from decoded token; find user based on email
