@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
-const { User } = require('./user')
-const { RESPONSE_CODES, RESPONSE_MSG } = require('./constants')
+const { User } = require('../models/user')
+const { RESPONSE_CODES, RESPONSE_MSG } = require('../constants')
 
 const authenticateToken = async (req, res, next) => {
   // Extract token from request; if token is missing, return 401, else verify token

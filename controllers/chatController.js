@@ -2,7 +2,7 @@ const fetch = require('node-fetch')
 const {
   RESPONSE_CODES,
   RESPONSE_MSG
-} = require('./constants')
+} = require('../constants')
 
 const API_URL = 'https://api.anthropic.com'
 const API_TOKEN = process.env.ANTHROPIC_API_TOKEN

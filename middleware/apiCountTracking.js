@@ -1,9 +1,9 @@
-const User = require('./user')
+const User = require('../models/user')
 const {
   RESPONSE_CODES,
   RESPONSE_MSG,
   MAX_API_CALLS
-} = require('./constants')
+} = require('../constants')
 
 const trackApiCalls = async (req, res, next) => {
   const userEmail = req.user.email

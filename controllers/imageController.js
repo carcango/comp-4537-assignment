@@ -1,5 +1,5 @@
 const OpenAI = require('openai')
-const { RESPONSE_CODES, RESPONSE_MSG } = require('./constants')
+const { RESPONSE_CODES, RESPONSE_MSG } = require('../constants')
 
 const OPENAI_API_KEY = process.env.OPENAI_API_TOKEN
 const openai = new OpenAI({
