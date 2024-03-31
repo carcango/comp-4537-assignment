@@ -26,7 +26,7 @@ exports.userRegistration = async (req, res) => {
     }
 
     /* If user does not already exist, then create a new user;
-    password hashing is handled by `user` */
+    (password hashing is handled by `user` object) */
     await User.createUser({
       email: req.body.email,
       password: req.body.password

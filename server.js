@@ -8,7 +8,6 @@ const User = require('./user')
 const {
   RESPONSE_CODES,
   RESPONSE_MSG,
-  MAX_TOKEN_AGE_IN_MS,
   MAX_API_CALLS
 } = require('./constants')
 const cors = require('cors')
@@ -21,7 +20,12 @@ dotenv.config({ path: '.env.local' })
 
 const express = require('express')
 const app = express()
+
 const authenticateToken = require('./authMiddleware')
+const { userRegistration, userLogin } = require('./authController')
+const { handleChatMessages } = require('./chatController')
+const { handleImageGeneration } = require('./imageController')
+
 app.use(cors({
   origin: (origin, cb) => cb(null, true),
   credentials: true // reflect the request's credentials mode
@@ -59,174 +63,16 @@ app.get('/users', async (_, res) => {
   }
 })
 
-/// /////////////////////////////////////////
-// Create User, Hash Password, Store User ///
-/// /////////////////////////////////////////
-app.post('/users', async (req, res) => {
-  try {
-    // Check payload for email, password; ensure they exist
-    if (req.body.email == null || req.body.password == null) {
-      return res
-        .status(RESPONSE_CODES.BAD_REQUEST_400)
-        .send(RESPONSE_MSG.MISSING_INFO_400)
-    }
-    // Check if user already exists
-    if (
-      await User.findOne({
-        where: {
-          email: req.body.email
-        }
-      })
-    ) {
-      return res
-        .status(RESPONSE_CODES.CONFLICT_409)
-        .send(RESPONSE_MSG.ALREADY_EXISTS_409)
-    }
+// Handle user registration and login
+app.post('/users', userRegistration)
+app.post('/users/login', userLogin)
 
-    const user = await User.createUser({
-      email: req.body.email,
-      password: req.body.password
-    })
+// Handle chat messages
+app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
 
-    // Create token; user email is the payload (used to identify user later on)
-    const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, {
-      expiresIn: MAX_TOKEN_AGE_IN_MS
-    })
+// Handle image generation
+app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
 
-    res
-      .status(RESPONSE_CODES.CREATED_USER_201)
-      .json({ token, message: RESPONSE_MSG.SUCCESSFULLY_REGISTERED_201 })
-  } catch (error) {
-    logError('users', 'Error creating user! ' + error)
-    res
-      .status(RESPONSE_CODES.SERVER_ERROR_500)
-      .send(RESPONSE_MSG.SERVER_ERROR_500)
-  }
-})
-
-/// /////////////
-// User Login ///
-/// /////////////
-app.post('/users/login', async (req, res) => {
-  try {
-    if (req.body.email == null || req.body.password == null) {
-      return res
-        .status(RESPONSE_CODES.BAD_REQUEST_400)
-        .send(RESPONSE_MSG.MISSING_INFO_400)
-    }
-
-    const user = await User.findOne({
-      where: {
-        email: req.body.email
-      }
-    })
-
-    if (user == null) {
-      return res
-        .status(RESPONSE_CODES.NOT_FOUND_404)
-        .send(RESPONSE_MSG.NOT_FOUND_404)
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      req.body.password,
-      user.password
-    )
-
-    if (!isPasswordValid) {
-      return res
-        .status(RESPONSE_CODES.UNAUTHORIZED_401)
-        .send(RESPONSE_MSG.UNAUTHORIZED_401)
-    }
-
-    // Create token; user email is the payload (used to identify user later on)
-    const token = jwt.sign({ userEmail: user.email }, SECRET_KEY, { expiresIn: MAX_TOKEN_AGE_IN_MS })
-    res
-      .cookie('token', token, {
-        httpOnly: true,
-        secure: true,
-        maxAge: MAX_TOKEN_AGE_IN_MS
-      })
-      .status(RESPONSE_CODES.OK_200)
-      .json({ message: RESPONSE_MSG.OK_200 })
-  } catch (error) {
-    logError('users/login', 'Error on user login! ' + error)
-    res
-      .status(RESPONSE_CODES.SERVER_ERROR_500)
-      .send(RESPONSE_MSG.SERVER_ERROR_500)
-  }
-})
-
-app.get('/verify-token', authenticateToken, (req, res) => {
-  res.status(200).send({ message: 'Token is valid' })
-})
-
-/// ///////////////////////
-// Handle Chat Messages ///
-/// ///////////////////////
-const API_URL = 'https://api.anthropic.com'
-const API_TOKEN = process.env.ANTHROPIC_API_TOKEN
-const ANTHROPIC_VERSION = '2023-06-01'
-app.post('/chat', authenticateToken, trackApiCalls, async (req, res) => {
-  const { messages } = req.body
-
-  try {
-    const response = await fetch(`${API_URL}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': API_TOKEN,
-        'anthropic-version': ANTHROPIC_VERSION
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        system:
-          'Roleplay as a text-based fantasy adventure game. Keep your responses to a couple sentences or less for a dynamic experience.',
-        messages,
-        max_tokens: 200
-      })
-    })
-
-    const data = await response.json()
-
-    if (response.ok) {
-      const assistantReply = data.content[0].text
-      res.json({
-        message: assistantReply,
-        apiCallCounter: req.user.apiCallCounter
-      })
-    } else {
-      res.status(500).json({ error: 'An error occurred' })
-    }
-  } catch (error) {
-    logError('chat', 'Error POSTing chat message! ' + error)
-    res.status(500).json({ error: 'An error occurred' })
-  }
-})
-
-/// ///////////////////////
-// Handle Image requests ///
-/// ///////////////////////
-app.post(
-  '/generate-image',
-  authenticateToken,
-  trackApiCalls,
-  async (req, res) => {
-    const { prompt } = req.body
-
-    try {
-      const response = await openai.images.generate({
-        model: 'dall-e-3',
-        prompt,
-        n: 1
-      })
-      const imageUrl = response.data[0].url
-      res.json({ imageUrl, apiCallCounter: req.user.apiCallCounter })
-    } catch (error) {
-      logError('generate-image', 'Error generating image! ' + error)
-      res.status(500).json({ error: 'An error occurred' })
-    }
-  }
-)
 /// ///////////////
 // User API URL ///
 /// ///////////////
