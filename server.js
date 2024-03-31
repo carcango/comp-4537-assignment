@@ -17,8 +17,8 @@ dotenv.config({ path: '.env.local' })
 const express = require('express')
 const app = express()
 
-const authenticateToken = require('./middleware/userAuthentication')
-const trackApiCalls = require('./middleware/apiCountTracking')
+const { authenticateToken } = require('./middleware/userAuthentication')
+const { trackApiCalls } = require('./middleware/apiCountTracking')
 
 const { userRegistration, userLogin } = require('./controllers/authController')
 const { handleChatMessages } = require('./controllers/chatController')
@@ -65,4 +65,6 @@ app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
 // Handle image generation
 app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
 
-app.listen(process.env.PORT, () => console.log(`Server started; listening on Port ${process.env.PORT}`))
+app.listen(4000, () => console.log(`Server started; listening on Port ${4000}`))
+
+// app.listen(process.env.PORT, () => console.log(`Server started; listening on Port ${process.env.PORT}`))
