@@ -16,7 +16,7 @@ const express = require('express')
 const app = express()
 
 const { authenticateToken } = require('./middleware/authenticateToken')
-const { trackApiCalls } = require('./middleware/apiCountTracking')
+const { trackApiCalls } = require('./middleware/trackApiCalls')
 
 const { userRegistration, userLogin } = require('./controllers/authController')
 const { handleChatMessages } = require('./controllers/chatController')
