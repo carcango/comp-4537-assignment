@@ -1,4 +1,5 @@
 const User = require('../models/user')
+
 const {
   RESPONSE_CODES,
   RESPONSE_MSG,
@@ -14,7 +15,9 @@ exports.trackApiCalls = async (req, res, next) => {
       .status(RESPONSE_CODES.UNAUTHORIZED_401)
       .send(RESPONSE_MSG.UNAUTHORIZED_401)
   }
+
   user.apiCallCounter++
+
   await user.save()
   if (user.apiCallCounter > MAX_API_CALLS) {
     return res
