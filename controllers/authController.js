@@ -74,9 +74,10 @@ exports.userLogin = async (req, res) => {
 
     res.cookie('token', token,
       {
-        httpOnly: false, // Set to true in production
-        secure: false, // Set to true in production
-        maxAge: MAX_TOKEN_AGE_IN_MS
+        httpOnly: true,
+        secure: true,
+        maxAge: MAX_TOKEN_AGE_IN_MS,
+        sameSite: 'none'
       })
 
     // Notify user that login was successful

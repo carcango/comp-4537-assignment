@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const { User } = require('../models/user')
+const User = require('../models/user')
 const { RESPONSE_CODES, RESPONSE_MSG } = require('../constants')
 
 exports.authenticateToken = async (req, res, next) => {
