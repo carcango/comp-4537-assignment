@@ -1,12 +1,5 @@
 // TODO: Add user-facing messages to separate file
 
-const User = require('./models/user')
-
-const {
-  RESPONSE_CODES,
-  RESPONSE_MSG
-} = require('./constants')
-
 const sequelize = require('./config/db')
 
 const dotenv = require('dotenv')
@@ -15,9 +8,11 @@ dotenv.config({ path: '.env.local' })
 const express = require('express')
 const app = express()
 
+const User = require('./models/user')
+const { RESPONSE_CODES, RESPONSE_MSG } = require('./constants')
+
 const { authenticateToken } = require('./middleware/authenticateToken')
 const { trackApiCalls } = require('./middleware/trackApiCalls')
-
 const { userRegistration, userLogin } = require('./controllers/authController')
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
