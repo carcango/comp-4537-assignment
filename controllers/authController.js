@@ -8,6 +8,9 @@ const {
 } = require('../constants') // Adjust the path as needed
 
 exports.userRegistration = async (req, res) => {
+  if (isPotentialSqlInjection(req.body.email) || isPotentialSqlInjection(req.body.password)){
+    return res.send(RESPONSE_CODES.SQLI_469).status(RESPONSE_MSG.SQLI_DETECTED)
+  }
   try {
   // Check payload for email, password; ensure they exist
     if (req.body.email == null || req.body.password == null) {
@@ -30,6 +33,11 @@ exports.userRegistration = async (req, res) => {
       email: req.body.email,
       password: req.body.password
     })
+
+    // Check SQL injection
+    if (isPotentialSqlInjection(req.body.email) || isPotentialSqlInjection(req.body.password)){
+      return res.send(RESPONSE_CODES.SQLI_469).status(RESPONSE_MSG.SQLI_DETECTED)
+    }
 
     // Notify user that registration was successful
     res
@@ -91,3 +99,14 @@ exports.userLogin = async (req, res) => {
       .send(RESPONSE_MSG.SERVER_ERROR_500)
   }
 }
+
+function isPotentialSqlInjection(inputString) {
+  // Regular expression pattern to match common SQL injection techniques
+  // This pattern looks for typical SQL keywords and patterns used in injections
+  // Adjust the pattern as necessary for your specific needs
+  const pattern = /(UNION\s+SELECT|SELECT\s+.*\s+FROM|INSERT\s+INTO|DELETE\s+FROM|UPDATE\s+.*\s+SET|DROP\s+TABLE|EXEC(\s|\())/i;
+
+  // The 'i' flag in the RegExp makes the pattern case-insensitive
+  return pattern.test(inputString);
+}
+
