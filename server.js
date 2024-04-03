@@ -16,6 +16,7 @@ const { trackApiCalls } = require('./middleware/trackApiCalls')
 const { userRegistration, userLogin } = require('./controllers/authController')
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
+const { resetApiCallCount } = require('./controllers/resetAPICallCount')
 
 const cors = require('cors')
 app.use(cors({
@@ -44,6 +45,8 @@ app.get('/users', async (_, res) => {
       .send(RESPONSE_MSG.SERVER_ERROR_500)
   }
 })
+
+app.patch('/reset-api-call-count', authenticateToken, resetApiCallCount)
 
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)
