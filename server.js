@@ -51,7 +51,6 @@ app.patch('/reset-api-call-count/:email', resetApiCallCount)
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)
 
-// This is the issue
 app.get('/verify-token', authenticateToken, (req, res) => {
   res.json({ message: 'Token is valid', user: req.user })
 })

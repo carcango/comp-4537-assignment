@@ -6,8 +6,7 @@ const {
 
 exports.resetApiCallCount = async (req, res) => {
   try {
-    const { email } = req.params
-
+    const email = req.params.email
     const user = await User.findOne({ where: { email } })
 
     if (!user) {
@@ -19,10 +18,9 @@ exports.resetApiCallCount = async (req, res) => {
     user.apiCallCounter = 0
 
     await user.save()
+    return res.json({ message: 'API call count has been reset!' })
   } catch (error) {
     console.error('Error resetting API call count! ' + error)
-    res
-      .status(RESPONSE_CODES.SERVER_ERROR_500)
-      .send(RESPONSE_MSG.SERVER_ERROR_500)
+    return res.status(RESPONSE_CODES.SERVER_ERROR_500).send(RESPONSE_MSG.SERVER_ERROR_500)
   }
 }
