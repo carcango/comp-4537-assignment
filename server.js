@@ -46,7 +46,7 @@ app.get('/users', async (_, res) => {
   }
 })
 
-app.patch('/reset-api-call-count', authenticateToken, resetApiCallCount)
+app.patch('/reset-api-call-count/:email', resetApiCallCount)
 
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)

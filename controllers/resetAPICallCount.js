@@ -6,7 +6,9 @@ const {
 
 exports.resetApiCallCount = async (req, res) => {
   try {
-    const user = await User.findOne({ where: { email: req.user.email } })
+    const { email } = req.params
+
+    const user = await User.findOne({ where: { email } })
 
     if (!user) {
       return res
