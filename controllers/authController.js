@@ -74,10 +74,10 @@ exports.userLogin = async (req, res) => {
 
     res.cookie('token', token,
       {
-        httpOnly: true,
-        secure: true,
+        httpOnly: true, // Makes cookie inaccessbile to JavaScript; prevent XSS attacks
+        secure: true, // Ensures cookie is only sent over HTTPS
         maxAge: MAX_TOKEN_AGE_IN_MS,
-        sameSite: 'none'
+        sameSite: 'none' // Cookie can be sent cross-origin, not just same-origin
       })
 
     // Notify user that login was successful
