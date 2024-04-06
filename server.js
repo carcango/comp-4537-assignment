@@ -17,6 +17,7 @@ const { trackApiCalls } = require('./middleware/trackApiCalls')
 const { userRegistration, userLogin } = require('./controllers/authController')
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
+const { resetApiCallCount } = require('./controllers/resetAPICallCount')
 
 const cors = require('cors')
 app.use(cors({
@@ -46,10 +47,11 @@ app.get('/users', async (_, res) => {
   }
 })
 
+app.patch('/reset-api-call-count/:email', resetApiCallCount)
+
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)
 
-// This is the issue
 app.get('/verify-token', authenticateToken, (req, res) => {
   res.json({ message: 'Token is valid', user: req.user })
 })

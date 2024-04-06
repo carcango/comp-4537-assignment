@@ -6,6 +6,7 @@ const RESPONSE_CODES = {
   FORBIDDEN_403: 403,
   NOT_FOUND_404: 404,
   CONFLICT_409: 409,
+  SQLI_469: 469,
   SERVER_ERROR_500: 500
 }
 
@@ -17,7 +18,8 @@ const RESPONSE_MSG = {
   API_LIMIT_EXCEEDED_403: "You've exceeded your API call limit",
   NOT_FOUND_404: 'User not found',
   ALREADY_EXISTS_409: 'User already exists',
-  SERVER_ERROR_500: 'Internal Server Error'
+  SERVER_ERROR_500: 'Internal Server Error',
+  SQLI_DETECTED: "Normally we wouldn't tell you this, but this proves we can detect an sql injection"
 }
 
 const MAX_API_CALLS = 20
