@@ -14,6 +14,7 @@ const { RESPONSE_CODES, RESPONSE_MSG } = require('./constants')
 
 const { authenticateToken } = require('./middleware/authenticateToken')
 const { trackApiCalls } = require('./middleware/trackApiCalls')
+const { authenticateAdmin } = require('./middleware/authenticateAdmin')
 const { userRegistration, userLogin, userLogout } = require('./controllers/authController')
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
@@ -47,7 +48,12 @@ app.get('/users', async (_, res) => {
   }
 })
 
-app.patch('/reset-api-call-count/:email', resetApiCallCount)
+app.patch(
+  '/reset-api-call-count/:email',
+  authenticateToken,
+  authenticateAdmin,
+  resetApiCallCount
+)
 app.get('/api-call-count', authenticateToken, (req, res) => {
   res
     .status(RESPONSE_CODES.OK_200)
