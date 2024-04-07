@@ -7,6 +7,7 @@ dotenv.config({ path: '.env.local' })
 
 const express = require('express')
 const app = express()
+const PORT = process.env.PORT || 4000
 
 const User = require('./models/user')
 const { RESPONSE_CODES, RESPONSE_MSG } = require('./constants')
@@ -69,6 +70,4 @@ app.post(
   handleImageGeneration
 )
 
-app.listen(4000, () => console.log(`Server started; listening on Port ${4000}`))
-
-// app.listen(process.env.PORT, () => console.log(`Server started; listening on Port ${process.env.PORT}`))
+app.listen(PORT, () => console.log(`Server started; listening on Port ${PORT}`))
