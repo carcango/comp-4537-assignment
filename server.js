@@ -48,6 +48,11 @@ app.get('/users', async (_, res) => {
 })
 
 app.patch('/reset-api-call-count/:email', resetApiCallCount)
+app.get('/api-call-count', authenticateToken, (req, res) => {
+  res
+    .status(RESPONSE_CODES.OK_200)
+    .json({ count: req.user.apiCallCounter })
+})
 
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)
