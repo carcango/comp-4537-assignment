@@ -19,8 +19,8 @@ const { userRegistration, userLogin, userLogout } = require('./controllers/authC
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
 const { resetApiCallCount } = require('./controllers/resetAPICallCount')
-const { forgotPassword } = require('./middleware/forgotPassword')
-const { resetPassword } = require('./middleware/resetPassword')
+const { forgotPassword } = require('./controllers/forgotPasswordController')
+const { resetPassword } = require('./controllers/resetPasswordController')
 
 const cors = require('cors')
 app.use(cors({
