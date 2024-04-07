@@ -15,14 +15,12 @@ exports.trackApiCalls = async (req, res, next) => {
       .status(RESPONSE_CODES.UNAUTHORIZED_401)
       .send(RESPONSE_MSG.UNAUTHORIZED_401)
   }
-
-  user.apiCallCounter++
-
-  await user.save()
-  if (user.apiCallCounter > MAX_API_CALLS) {
+  if (user.apiCallCounter >= MAX_API_CALLS) {
     return res
       .status(RESPONSE_CODES.FORBIDDEN_403)
       .send(RESPONSE_MSG.API_LIMIT_EXCEEDED_403)
   }
+  user.apiCallCounter++
+  await user.save()
   next()
 }
