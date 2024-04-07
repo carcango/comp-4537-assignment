@@ -21,7 +21,7 @@ const { handleImageGeneration } = require('./controllers/imageController')
 const { resetApiCallCount } = require('./controllers/resetAPICallCount')
 const { forgotPassword } = require('./controllers/forgotPasswordController')
 const { resetPassword } = require('./controllers/resetPasswordController')
-const { deleteUser } = require('./controllers/deleteUserController')
+const deleteUser = require('./controllers/deleteUserController')
 
 const cors = require('cors')
 app.use(cors({
