@@ -1,9 +1,9 @@
 // TODO: Add user-facing messages to separate file
 
-const sequelize = require('./config/db')
-
 const dotenv = require('dotenv')
 dotenv.config({ path: '.env.local' })
+
+const sequelize = require('./config/db')
 
 const express = require('express')
 const app = express()
@@ -80,6 +80,6 @@ app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
 
 app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
 
-app.delete('/delete-user/:email', authenticateToken, authenticateAdmin, deleteUser);
+app.delete('/delete-user/:email', authenticateToken, authenticateAdmin, deleteUser)
 
 app.listen(PORT, () => console.log(`Server started; listening on Port ${PORT}`))
