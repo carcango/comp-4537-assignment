@@ -21,6 +21,7 @@ const { handleImageGeneration } = require('./controllers/imageController')
 const { resetApiCallCount } = require('./controllers/resetAPICallCount')
 const { forgotPassword } = require('./controllers/forgotPasswordController')
 const { resetPassword } = require('./controllers/resetPasswordController')
+const { deleteUser } = require('./controllers/deleteUserController')
 
 const cors = require('cors')
 app.use(cors({
@@ -78,5 +79,7 @@ app.post('/reset-password/:token', resetPassword)
 app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
 
 app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
+
+app.delete('/delete-user/:email', authenticateToken, authenticateAdmin, deleteUser);
 
 app.listen(PORT, () => console.log(`Server started; listening on Port ${PORT}`))
