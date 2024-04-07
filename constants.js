@@ -15,6 +15,7 @@ const RESPONSE_MSG = {
   SUCCESSFULLY_REGISTERED_201: 'User successfully registered!',
   MISSING_INFO_400: 'Missing email or password',
   UNAUTHORIZED_401: "Unauthorized: email or password doesn't match",
+  SESSION_EXPIRED_401: 'Session timed out. Please log in again.',
   API_LIMIT_EXCEEDED_403: "You've exceeded your API call limit",
   NOT_FOUND_404: 'User not found',
   ALREADY_EXISTS_409: 'User already exists',

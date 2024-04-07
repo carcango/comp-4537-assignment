@@ -29,7 +29,7 @@ exports.authenticateToken = async (req, res, next) => {
     req.user = user
     next()
   } catch (error) {
-    // The token is either invalid or expired, and thus the request is forbidden.
-    return res.status(RESPONSE_CODES.FORBIDDEN_403).send(RESPONSE_MSG.FORBIDDEN_403)
+    // The token is either invalid or expired, and thus need new auth credentials.
+    return res.status(RESPONSE_CODES.UNAUTHORIZED_401).send(RESPONSE_MSG.SESSION_EXPIRED_401)
   }
 }
