@@ -19,6 +19,8 @@ const { userRegistration, userLogin, userLogout } = require('./controllers/authC
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
 const { resetApiCallCount } = require('./controllers/resetAPICallCount')
+const { forgotPassword } = require('./middleware/forgotPassword')
+const { resetPassword } = require('./middleware/resetPassword')
 
 const cors = require('cors')
 app.use(cors({
@@ -61,6 +63,7 @@ app.get('/api-call-count', authenticateToken, (req, res) => {
 })
 
 app.post('/users', userRegistration)
+
 app.post('/users/login', userLogin)
 app.post('/users/logout', userLogout)
 
@@ -68,18 +71,12 @@ app.get('/verify-token', authenticateToken, (req, res) => {
   res.json({ message: 'Token is valid', user: req.user })
 })
 
-app.post(
-  '/chat',
-  authenticateToken,
-  trackApiCalls,
-  handleChatMessages
-)
+app.post('/forgot-password', forgotPassword)
 
-app.post(
-  '/generate-image',
-  authenticateToken,
-  trackApiCalls,
-  handleImageGeneration
-)
+app.post('/reset-password/:token', resetPassword)
+
+app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
+
+app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
 
 app.listen(PORT, () => console.log(`Server started; listening on Port ${PORT}`))
