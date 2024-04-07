@@ -100,6 +100,19 @@ exports.userLogin = async (req, res) => {
   }
 }
 
+exports.userLogout = async (_, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: true,
+    maxAge: MAX_TOKEN_AGE_IN_MS,
+    sameSite: 'none'
+  })
+  // Redirect user back to login page after logout.
+  res
+    .status(RESPONSE_CODES.OK_200)
+    .send(RESPONSE_MSG.OK_200)
+}
+
 function isPotentialSqlInjection (inputString) {
   // Regular expression pattern to match common SQL injection techniques
   // This pattern looks for typical SQL keywords and patterns used in injections

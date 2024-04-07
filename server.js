@@ -14,7 +14,7 @@ const { RESPONSE_CODES, RESPONSE_MSG } = require('./constants')
 
 const { authenticateToken } = require('./middleware/authenticateToken')
 const { trackApiCalls } = require('./middleware/trackApiCalls')
-const { userRegistration, userLogin } = require('./controllers/authController')
+const { userRegistration, userLogin, userLogout } = require('./controllers/authController')
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
 const { resetApiCallCount } = require('./controllers/resetAPICallCount')
@@ -51,6 +51,7 @@ app.patch('/reset-api-call-count/:email', resetApiCallCount)
 
 app.post('/users', userRegistration)
 app.post('/users/login', userLogin)
+app.post('/users/logout', userLogout)
 
 app.get('/verify-token', authenticateToken, (req, res) => {
   res.json({ message: 'Token is valid', user: req.user })
