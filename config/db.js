@@ -2,13 +2,13 @@
 const Sequelize = require('sequelize')
 
 const sequelize = new Sequelize(
-  'comp4537_assignment',
-  'assignment_user',
-  'j8#^&4DmHFCuK!CX',
+  process.env.POSTGRES_DATABASE,
+  process.env.POSTGRES_USER,
+  process.env.POSTGRES_PASSWORD,
   {
-    host: 'comp-4537-4392.g95.gcp-us-west2.cockroachlabs.cloud',
+    host: process.env.POSTGRES_HOST,
     dialect: 'postgres',
-    port: 26257,
+    port: process.env.POSTGRES_PORT,
     dialectOptions: {
       ssl: {
         rejectUnauthorized: false
