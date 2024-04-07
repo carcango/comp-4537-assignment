@@ -1,5 +1,5 @@
 // controllers/deleteUserController.js
-const { User } = require('../models/user') // Adjust the path as necessary
+const User = require('../models/user') // Adjust the path as necessary
 
 const deleteUser = async (req, res) => {
   const email = req.params.email // Extract email from URL parameters

@@ -1,9 +1,9 @@
 // TODO: Add user-facing messages to separate file
 
-const sequelize = require('./config/db')
-
 const dotenv = require('dotenv')
 dotenv.config({ path: '.env.local' })
+
+const sequelize = require('./config/db')
 
 const express = require('express')
 const app = express()
