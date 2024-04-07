@@ -80,6 +80,6 @@ app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
 
 app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
 
-app.delete('/delete-user/:email', authenticateToken, authenticateAdmin, deleteUser);
+app.delete('/delete-user/:email', authenticateToken, authenticateAdmin, deleteUser)
 
 app.listen(PORT, () => console.log(`Server started; listening on Port ${PORT}`))
