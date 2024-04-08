@@ -23,13 +23,14 @@ const { getApiRouteStats } = require('./controllers/getApiRouteStatsController')
 const { forgotPassword } = require('./controllers/forgotPasswordController')
 const { resetPassword } = require('./controllers/resetPasswordController')
 const deleteUser = require('./controllers/deleteUserController')
+const promoteUser = require('./controllers/promoteUserController')
+
 
 const swaggerUi = require('swagger-ui-express')
 const swaggerSpec = require('./swagger')
 
 // Serve Swagger docs at the '/doc/' endpoint
 app.use('/doc/', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
-const promoteUser = require('./controllers/promoteUserController')
 
 const cors = require('cors')
 app.use(cors({
@@ -292,9 +293,73 @@ app.get('/verify-token', authenticateToken, (req, res) => {
   res.json({ message: 'Token is valid', user: req.user })
 })
 
+/**
+ * @swagger
+ * /verify-admin:
+ *   get:
+ *     summary: Verify Admin User
+ *     description: Verifies if the current user has admin privileges.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User has admin privileges.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Confirmation that the user is an admin.
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: string
+ *                       description: Email of the admin user.
+ *                     isAdmin:
+ *                       type: boolean
+ *                       description: Boolean flag indicating admin status.
+ *       401:
+ *         description: Unauthorized if the user is not authenticated or not an admin.
+ */
 app.get('/verify-admin', authenticateToken, authenticateAdmin, (req, res) => {
   res.json({ message: 'user is admin', user: req.user })
 })
+
+/**
+ * @swagger
+ * /promote-user/{email}:
+ *   patch:
+ *     summary: Promote User to Admin
+ *     description: Grants admin privileges to the user with the specified email.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         description: Email of the user to be promoted to admin.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User was successfully promoted to admin.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Confirmation message about the promotion.
+ *       400:
+ *         description: Bad request if the email is not provided or invalid.
+ *       401:
+ *         description: Unauthorized if the user is not authenticated or not an admin.
+ */
+app.patch('/promote-user/:email', authenticateToken, authenticateAdmin, promoteUser)
 
 /**
  * @swagger
