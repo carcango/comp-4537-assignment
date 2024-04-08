@@ -22,6 +22,7 @@ const { resetApiCallCount } = require('./controllers/resetAPICallCount')
 const { forgotPassword } = require('./controllers/forgotPasswordController')
 const { resetPassword } = require('./controllers/resetPasswordController')
 const deleteUser = require('./controllers/deleteUserController')
+const promoteUser = require('./controllers/promoteUserController')
 
 const cors = require('cors')
 app.use(cors({
@@ -72,6 +73,10 @@ app.get('/verify-token', authenticateToken, (req, res) => {
   res.json({ message: 'Token is valid', user: req.user })
 })
 
+app.get('/verify-admin', authenticateToken, authenticateAdmin, (req, res) => {
+  res.json({ message: 'user is admin', user: req.user })
+})
+
 app.post('/forgot-password', forgotPassword)
 
 app.post('/reset-password/:token', resetPassword)
@@ -81,5 +86,7 @@ app.post('/chat', authenticateToken, trackApiCalls, handleChatMessages)
 app.post('/generate-image', authenticateToken, trackApiCalls, handleImageGeneration)
 
 app.delete('/delete-user/:email', authenticateToken, authenticateAdmin, deleteUser)
+
+app.patch('/promote-user/:email', authenticateToken, authenticateAdmin, promoteUser)
 
 app.listen(PORT, () => console.log(`Server started; listening on Port ${PORT}`))
