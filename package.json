@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "devStart": "nodemon server.js"
+    "devStart": "nodemon server.js",
+    "generate-swagger": "node generate-swagger.js"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +20,8 @@
     "openai": "^4.29.2",
     "pg": "^8.11.3",
     "sequelize": "^6.37.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
     "validator": "^13.11.0"
   },
   "devDependencies": {
