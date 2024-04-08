@@ -296,10 +296,6 @@ app.get('/verify-admin', authenticateToken, authenticateAdmin, (req, res) => {
   res.json({ message: 'user is admin', user: req.user })
 })
 
-app.get('/verify-admin', authenticateToken, authenticateAdmin, (req, res) => {
-  res.json({ message: 'user is admin', user: req.user })
-})
-
 /**
  * @swagger
  * /forgot-password:
