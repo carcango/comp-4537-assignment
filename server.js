@@ -19,6 +19,7 @@ const { userRegistration, userLogin, userLogout } = require('./controllers/authC
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
 const { resetApiCallCount } = require('./controllers/resetAPICallCount')
+const { getApiRouteStats } = require('./controllers/getApiRouteStatsController')
 const { forgotPassword } = require('./controllers/forgotPasswordController')
 const { resetPassword } = require('./controllers/resetPasswordController')
 const deleteUser = require('./controllers/deleteUserController')
@@ -66,6 +67,7 @@ app.get('/api-call-count', authenticateToken, (req, res) => {
     .status(RESPONSE_CODES.OK_200)
     .json({ count: req.user.apiCallCounter })
 })
+app.get('/api-route-stats', authenticateToken, authenticateAdmin, getApiRouteStats)
 
 app.post('/users', userRegistration)
 
