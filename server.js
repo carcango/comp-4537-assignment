@@ -36,8 +36,12 @@ app.use(express.json())
 const cookieParser = require('cookie-parser')
 app.use(cookieParser())
 
-// Sync the database models
-sequelize.sync()
+const { trackApiRouteStats } = require('./middleware/trackApiRouteStats')
+app.use(trackApiRouteStats) // Must be called before sequelize.sync to include tracking model
+
+// Sync the database models, alter does the following:
+// "This checks what is the current state of the table in the database (which columns it has, what are their data types, etc), and then performs the necessary changes in the table to make it match the model."
+sequelize.sync({ alter: true })
 
 app.get('/users', async (_, res) => {
   try {
