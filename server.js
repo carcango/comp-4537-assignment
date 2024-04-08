@@ -19,6 +19,7 @@ const { userRegistration, userLogin, userLogout } = require('./controllers/authC
 const { handleChatMessages } = require('./controllers/chatController')
 const { handleImageGeneration } = require('./controllers/imageController')
 const { resetApiCallCount } = require('./controllers/resetAPICallCount')
+const { getApiRouteStats } = require('./controllers/getApiRouteStatsController')
 const { forgotPassword } = require('./controllers/forgotPasswordController')
 const { resetPassword } = require('./controllers/resetPasswordController')
 const deleteUser = require('./controllers/deleteUserController')
@@ -42,8 +43,12 @@ app.use(express.json())
 const cookieParser = require('cookie-parser')
 app.use(cookieParser())
 
-// Sync the database models
-sequelize.sync()
+const { trackApiRouteStats } = require('./middleware/trackApiRouteStats')
+app.use(trackApiRouteStats) // Must be called before sequelize.sync to include tracking model
+
+// Sync the database models, alter does the following:
+// "This checks what is the current state of the table in the database (which columns it has, what are their data types, etc), and then performs the necessary changes in the table to make it match the model."
+sequelize.sync({ alter: true })
 
 /**
  * @swagger
@@ -142,6 +147,44 @@ app.get('/api-call-count', authenticateToken, (req, res) => {
     .status(RESPONSE_CODES.OK_200)
     .json({ count: req.user.apiCallCounter })
 })
+
+/**
+ * @swagger
+ * /api-route-stats:
+ *   get:
+ *     summary: Retrieves each API endpoints call counts by user and HTTP method.
+ *     description: Returns the number of API calls for each route.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: The API call counts of each endpoint and method for each user.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 description: The number of API calls made by a user for a specific endpoint and method.
+ *                 properties:
+ *                   email:
+ *                     type: string
+ *                     description: User email or Uknown if no user
+ *                   method:
+ *                     type: string
+ *                     description: HTTP Method
+ *                   route:
+ *                     type: string
+ *                     description: Requested route
+ *                   count:
+ *                     type: integer
+ *                     description: Number of calls to this endpoint.
+ *       401:
+ *         description: Unauthorized if the user is not authenticated.
+ *       403:
+ *         description: Unauthorized if the user is not an administrator.
+ */
+app.get('/api-route-stats', authenticateToken, authenticateAdmin, getApiRouteStats)
 
 /**
  * @swagger
